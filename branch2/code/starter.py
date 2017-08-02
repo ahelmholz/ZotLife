@@ -21,29 +21,63 @@ def get_major_file(institution, major, type, catalog_year, specialization=None):
         print('We do not support this yet')
         exit()
 
+def check_basic_syntax_and_remove_comments(major_file):
+
+    def print_error(line_num):
+        print('An error occurred while parsing major file at line {}. Exiting...'.format(line_num))
+        exit()
+
+    ret_string = ''
+    special_comment = ''
+    open_square_count = 0
+    open_par_count = 0
+    line_number = 0
+    for line in major_file:
+        line_number += 1
+        ignore_rest_of_line = False
+        for char in line:
+            if not ignore_rest_of_line:
+                if char == '#':
+                    ignore_rest_of_line = True
+                else:
+                    if "'''" in line:
+                        special_comment += line
+                        break
+                    elif char == '[':
+                        open_square_count += 1
+                    elif char == ']':
+                        open_square_count -= 1
+                        if open_square_count < 0:
+                            print_error(line_number)
+                    elif char == '(':
+                        open_par_count += 1
+                    elif char == ')':
+                        open_par_count -= 1
+                        if open_par_count < 0:
+                            print_error(line_number)
+                    # add char to ret_object
+                    ret_string += char
+            else:
+                if char == '\n':
+                    ignore_rest_of_line = False
+    if open_square_count > 0 or open_par_count > 0:
+        print_error(-1)
+    # remove quotes from special comment
+    special_comment = special_comment.replace("'''", "").strip()
+    return (special_comment, ret_string)
+
 # stores info from both .maj file and class database
 def load_major_courses_into_data_structure(major_file):
+
+    # will be a tuple, the first string being the comment to the user about the major, the second being the remaining text
+    major_strings = check_basic_syntax_and_remove_comments(major_file)
+    print(major_strings[1])
+
     # put courses in dictionary for loading all info easily and efficiently
     # will make objects from below
     course_dict = {}
 
-    # logically..Not actually
-    square_brace_stack = 0
-    """   WORK IN PROGRESS """
-    for line in major_file:
-        # build quote if there
-        # open working 'class' with methods to add to it until over
-        for char in line:
-            if char == '#':
-                break
-            elif char == '[':
-                square_brace_stack += 1
-            elif char == ']':
-                # more ']' than '['
-                square_brace_stack -= 1
-                if square_brace_stack < 0:
-                    print("The syntax in the specified major file is incorrect")
-                    exit()
+
 
 
     # define what needs to be returned

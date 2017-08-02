@@ -21,10 +21,11 @@
 # Parenthesis, '(' and ')' only can be used in expressions
 # The course entry with a '*' in front of it (e.g. *[CMPS 101]) is the course's entry for prerequisites/corequisites
 # A number in front of parenthesis indicates how many courses, or groupings of courses, must be taken 
-#     from within the parenthesis e.g. 2([CMPS 30] O [CMPS 31] O ([CMPS 12] A [CMPS 13]) means CMPS 30 and 31 can be
+#     from within the parenthesis e.g. 2([CMPS 30] O [CMPS 31] O ([CMPS 12] A [CMPS 13])) means CMPS 30 and 31 can be
 #     taken to satisfy the expression, or CMPS 31 along with CMPS 12 and CMPS 13, and so on
 #
-# ''' a comment to the user about the overall major would go in triple single quotes -- only one allowed '''
+# ''' a comment to the user about the overall major would go in triple single quotes -- only one allowed -- must
+# be only text on line(s) '''
 # var_name = var is the format for variables to be loaded 
 # e.g. 
 #      *[CMPS 101]
