@@ -68,8 +68,6 @@
   $ 'Please check placement requirements and prerequisites for this course.'
 *[CMPS 12L]
   credits = 2
-
-
 *[CMPS 101]
   credits = 5
   [CMPS 12B] # can leave out 12M since it was a coreq to 12B, also excluding CMPS 13
