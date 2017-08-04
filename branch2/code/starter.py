@@ -1,3 +1,27 @@
+''' This will make sense later -- MUCH thought has gone into it and it is probably really confusing without implementation '''
+class PrereqWrapper:
+    def __init__(self):
+        # check depth, can have multiple depths
+        # check if type PrereqWrapper or Course when doing work (nesting)
+        AND = []
+        OR = []
+
+# VERY powerful because it combines major info with specific, up to date class info for filtering
+class Course:
+    def __init__(self, course_name):
+        self.course_name = course_name
+        self.isRequiredByMajor = None # since dict will be initialized with all prereqs as well
+        self.user_has_taken = None
+        # preqs before course
+        self.prereq_wrapper = None
+        self.coreq_list = []
+        self.classes = [] # loaded from database
+        # what is this class a prereq for?
+        self.course_is_prereq_for = None
+        # wrapper to say which courses have to be taken(AND/OR)
+        # pull/store info from DB?
+        # when is it offered?
+
 def get_major_file(institution, major, type, catalog_year, specialization=None):
     # basic checks of input to function -- won't catch everything (should be done elsewhere)
     # NOTE: revise tests?
@@ -5,7 +29,7 @@ def get_major_file(institution, major, type, catalog_year, specialization=None):
         print('Error 1 in get_major_file')
         exit()
     # NOTE: type will have to change later to include grad degrees/minors?
-    if len(type) != 2 or (type != 'BS' and type!='BA'):
+    if len(type) != 2 or (type != 'BS' and type != 'BA'):
         print('Error 2 in get_major_file')
         exit()
     if len(catalog_year) != 5 or catalog_year[2] != '-':
@@ -64,14 +88,52 @@ def check_basic_syntax_and_remove_comments(major_file):
         print_error(-1)
     # remove quotes from special comment
     special_comment = special_comment.replace("'''", "").strip()
-    return (special_comment, ret_string)
+    return (special_comment, ret_string.strip())
 
 # stores info from both .maj file and class database
 def load_major_courses_into_data_structure(major_file):
 
     # will be a tuple, the first string being the comment to the user about the major, the second being the remaining text
     major_strings = check_basic_syntax_and_remove_comments(major_file)
-    print(major_strings[1])
+    #print(major_strings[1])
+    # at this point, ''' ''' and # are stripped, somewhat valid parenthesis have been checked for
+
+    # split lines into two -- first half is major outline -- second half is course requirements
+    expression = ''
+    expression_terminatied = False
+    first_half = major_strings[1][:major_strings[1].index('*') - 1] # major requirements
+    second_half = major_strings[1][major_strings[1].index('*'):] # course requirements
+
+    # process courses first
+    for course in second_half.split('*')[1:]:
+        local_expression = ''
+        local_expression_terminated = False
+        for line in course.splitlines():
+            if '\\' in line.strip()[-1:]:
+                local_expression_terminated = False
+                local_expression += line[0:-1]
+            else:
+                local_expression_terminated = True
+                local_expression += line
+            if local_expression_terminated:
+                # process expression here
+                #print(local_expression)
+                # WORKING HERE
+                local_expression = ''
+
+    # process major requirements
+    for line in first_half.splitlines():
+        if '\\' in line.strip()[-1:]:
+            expression_terminated = False
+            expression += line[0:-1]
+        else:
+            expression_terminated = True
+            expression += line
+        if expression_terminated:
+            # process expression here
+            #print(expression)
+            # WORKING HERE 
+            expression = ''
 
     # put courses in dictionary for loading all info easily and efficiently
     # will make objects from below
@@ -83,31 +145,9 @@ def load_major_courses_into_data_structure(major_file):
     # define what needs to be returned
     # return the courses here
     """"""""""""""""""""""""""
+
+    # data structure will have what's required to get degree, and also courses in dict
     return True
-
-''' This will make sense later -- MUCH thought has gone into it and it is probably really confusing without implementation '''
-
-# VERY powerful because it combines major info with specific, up to date class info for filtering
-class Course:
-    def __init__(self):
-        self.isRequiredByMajor = None # since dict will be initialized with all prereqs as well
-        self.user_has_taken = None
-        # preqs before course
-        self.prereq_wrapper = None
-        self.coreq_list = []
-        # what is this class a prereq for?
-        self.course_is_prereq_for = None
-        # wrapper to say which courses have to be taken(AND/OR)
-        # pull/store info from DB?
-        # when is it offered?
-
-
-class PrereqWrapper:
-    def __init__(self):
-        # check depth, can have multiple depths
-        # check if type PrereqWrapper or Course when doing work (nesting)
-        AND = []
-        OR = []
 
 """ JUST FOR TESTING -- Make into functions/API later"""
 #institution = input("Institution: ")
@@ -132,4 +172,8 @@ class PrereqWrapper:
 major_file = open("../universities/UCSC/CMPS.BS.16-17", "r")
 """"""
 # will load info from the major file, make objects with info from both file and course DB
-courses = load_major_courses_into_data_structure(major_file)
+courses = None
+try:
+    courses = load_major_courses_into_data_structure(major_file)
+except:
+    print('We do not support this major at this University yet.')
