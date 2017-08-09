@@ -1,8 +1,9 @@
 ''' This will make sense later -- MUCH thought has gone into it and it is probably really confusing without implementation '''
 class PrereqWrapper:
-    def __init__(self):
+    def __init__(self, number_to_pick = 1):
         # check depth, can have multiple depths
         # check if type PrereqWrapper or Course when doing work (nesting)
+        self.number_to_pick = number_to_pick # number needed to be taken out of group to meet requirement
         self.AND = []
         self.OR = []
         
@@ -35,12 +36,18 @@ class Course:
     def add_comment(self, comment):
         self.comment = comment
 
+    def add_coreq(self, course_obj):
+        if course_obj not in self.coreq_list:
+            self.coreq_list.append(course_obj)
+
     def add_prereq(self, course_obj):
-        self.prereqs.append(course_obj)
+        if course_obj not in self.prereqs:
+            self.prereqs.append(course_obj)
 
     def __str__(self):
-        return 'Course name: {}\n\tvars: {}\n\tcomment: {}\n\tprereq_list: {}\n\tpreq_for_list: {}'.format(
-            self.course_name, self.variables, self.comment, self.prereqs, self.is_prereq_for)
+        return 'Course name: {}\n\tvars: {}\n\tcomment: {}\n\tprereq_list: {}\n\tpreq_for_list: {}\n\t' \
+               'coreq_list: {}'.format(
+            self.course_name, self.variables, self.comment, self.prereqs, self.is_prereq_for, self.coreq_list)
 
     def __repr__(self):
         return self.course_name
@@ -71,12 +78,12 @@ def get_major_file(institution, major, type, catalog_year, specialization=None):
         print('We do not support this yet')
         exit()
 
+# line numbers provided when able -- if not, -1
+def print_error(line_num):
+    print('An error occurred while parsing major file at line {}. Exiting...'.format(line_num))
+    exit()
+
 def check_basic_syntax_and_remove_comments(major_file):
-
-    def print_error(line_num):
-        print('An error occurred while parsing major file at line {}. Exiting...'.format(line_num))
-        exit()
-
     ret_string = ''
     special_comment = ''
     open_square_count = 0
@@ -85,32 +92,59 @@ def check_basic_syntax_and_remove_comments(major_file):
     for line in major_file:
         line_number += 1
         ignore_rest_of_line = False
-        for char in line:
+        line_course_count = 0
+        line_operator_count = 0
+        for i in range(len(line)):
             if not ignore_rest_of_line:
-                if char == '#':
+                if line[i] == '#':
                     ignore_rest_of_line = True
                 else:
                     if "'''" in line:
                         special_comment += line
                         break
-                    elif char == '[':
+                    elif line[i] == '[':
                         open_square_count += 1
-                    elif char == ']':
+                        if i > 0:
+                            if line[i - 1] != ' ' and line[i - 1] != '(' and line[i - 1] != '*' and line[i - 1] != ',':
+                                    print("Square bracket can only have (, ',', * or a space outside of it")
+                                    print_error(line_number)
+                    elif line[i] == ']':
+                        if i + 1 < len(line):
+                            if line[i + 1] != ' ' and line[i + 1] != ')' and line[i +1] != '\n' and line[i + 1] != ',':
+                                    print("Square bracket can only have ), ',', \\n or a space outside of it")
+                                    print_error(line_number)
                         open_square_count -= 1
+                        line_course_count += 1
                         if open_square_count < 0:
                             print_error(line_number)
-                    elif char == '(':
+                    elif line[i] == '(':
                         open_par_count += 1
-                    elif char == ')':
+                    elif line[i] == ')':
                         open_par_count -= 1
                         if open_par_count < 0:
                             print_error(line_number)
+                    elif open_square_count == 0 and (line[i] == 'A' or line[i] == 'O'):
+                        line_operator_count += 1
+                        if i > 0:
+                            if line[i - 1] != ' ' and line[i - 1] != '\n' and line[i - 1] != '\\':
+                                    print("A and O must have a space on each side")
+                                    print_error(line_number)
+                        if i + 1 < len(line):
+                            if line[i + 1] != ' ' and line[i + 1] != '\n' and line[i + 1] != '\\':
+                                    print("A and O must have a space on each side")
+                                    print_error(line_number)
+                    if line[i] == '\n' and line_operator_count > line_course_count:
+                        print('More operators than courses')
+                        print_error(-1)
                     # add char to ret_object
-                    ret_string += char
+                    ret_string += line[i]
             else:
-                if char == '\n':
-                    ret_string += char
+                if line[i] == '\n':
+                    ret_string += line[i]
                     ignore_rest_of_line = False
+                    if line_operator_count > line_course_count:
+                        print('More operators than courses')
+                        print_error(-1)
     if open_square_count > 0 or open_par_count > 0:
         print_error(-1)
     # remove quotes from special comment
@@ -145,7 +179,7 @@ def load_major_courses_into_data_structure(major_file):
         else:
             working_course = Course(name)
         local_expression = ''
-        local_expression_terminated = False
+        #local_expression_terminated = False
         # skipping first line which was course to open
         for line in course.splitlines()[1:]:
             if '\\' in line.strip()[-1:]:
@@ -153,13 +187,32 @@ def load_major_courses_into_data_structure(major_file):
                 local_expression += line[0:-1]
             else:
                 local_expression_terminated = True
-                local_expression += line
+                local_expression += ' ' + line # in case of line being continued =
+                local_expression = local_expression.strip()
             if local_expression_terminated:
                 # process expression here
                 # is var?
                 if '=' in line:
-                    temp = line.split('=')
-                    working_course.add_var(temp[0].strip(), temp[1].strip())
+                    # NOTE: get important variables here, if not they are put into generic course variabes
+                    temp = [i.strip() for i in line.split('=')]
+                    # NOTE: some redundancy with coreq stuff, 'C' and 'coreq =' are parsed to be safe
+                    if 'coreq' in temp[0]:
+                        if ',' not in temp[1]:
+                            name = temp[1][1:-1]
+                            if name not in course_dict:
+                                course_dict[name] = Course(name)
+                            working_course.add_coreq(course_dict[name])
+                            course_dict[name].add_coreq(working_course)
+                        else:
+                            names = [i.strip()[1:-1] for i in temp[1].split(',')]
+                            for name in names:
+                                if name not in course_dict:
+                                    course_dict[name] = Course(name)
+                                working_course.add_coreq(course_dict[name])
+                                course_dict[name].add_coreq(working_course)
+                    # elif here for grabbing additional important variables
+                    else:
+                        working_course.add_var(temp[0], temp[1])
                 # course comment
                 elif '$' in line:
                     line = line[line.index("'") + 1:]
@@ -175,7 +228,44 @@ def load_major_courses_into_data_structure(major_file):
                         working_course.add_prereq(course_dict[name])
                     # wrapper needed
                     else:
-                        # TODO: WORKING HERE - what is prereq course
+                        if '(' not in line and ')' not in line:
+                            # if there is no ( in the line, line must only have one type of operator
+                            if ' A ' in line:
+                                # create wrapper
+                                prw = PrereqWrapper()
+                                temp = line.split(' A ')
+                                temp_2 = [i.strip()[1:-1] for i in temp if '[' in i and ']' in i]
+                                for name in temp_2:
+                                    if name not in course_dict:
+                                        course_dict[name] = Course(name)
+                                        if working_course not in course_dict[name].is_prereq_for:
+                                            course_dict[name].add_is_prereq_for(working_course)
+                                    prw.AND.append(course_dict[name])
+                                working_course.add_prereq(prw)
+                            elif ' O ' in line:
+                                # create wrapper
+                                prw = PrereqWrapper()
+                                temp = line.split(' O ')
+                                temp_2 = [i.strip()[1:-1] for i in temp if '[' in i and ']' in i]
+                                for name in temp_2:
+                                    if name not in course_dict:
+                                        course_dict[name] = Course(name)
+                                        if working_course not in course_dict[name].is_prereq_for:
+                                            course_dict[name].add_is_prereq_for(working_course)
+                                    prw.OR.append(course_dict[name])
+                                working_course.add_prereq(prw)
+                            else:
+                                print("Something went wrong 98787 - random number to search in code")
+                                print_error(-1)
+                        # could have depth
+                        # TODO: handle number_to_pick -- working here
+                        else:
+                            # ( == wrapper when going through, for loop, keep index of (, stop, start there
+                            # check for digits in front of (
+                            pass
+                        #for c in range(len(line)):
+                        #    if line[c] == '(':
+                        #        if c > 0 and line[c - 1].isdigit()
                         pass
                 course_dict[working_course.course_name] = working_course
                 local_expression = ''
@@ -185,6 +275,7 @@ def load_major_courses_into_data_structure(major_file):
         print()
     ###
 
+    # take stuff from above
     # add to course if it is required
     # add to coreqs?
     # process major requirements

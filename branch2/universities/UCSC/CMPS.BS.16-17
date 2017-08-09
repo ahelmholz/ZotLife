@@ -29,6 +29,7 @@
 # e.g. 
 #      *[CMPS 101]
 #        credits = 5
+#        coreq = [COURSE NAME]
 # 'E' is for electives meaning '2E' means choosing 2 electives (may leave to the user for now?)
 #
 ################
@@ -65,14 +66,18 @@
 # -- COURSES --
 *[CMPS 12A]
   credits = 5
+  coreq = [CMPS 12L]
+  # if there was a coreq then
+  # coreq = [course]
+  # or
+  # coreq = [course a],[course b]
   $ 'Please check placement requirements and prerequisites for this course.'
 *[CMPS 12L]
   credits = 2
+  coreq = [CMPS 12A]
 *[CMPS 101]
   credits = 5
   [CMPS 12B] # can leave out 12M since it was a coreq to 12B, also excluding CMPS 13
   [CMPE 16]
   [MATH 19B]
-  [AMS 10] O [MATH 21] O [MATH 22] O [MATH 23A]
-
-                           
+  [AMS 10] O [MATH 21] O [MATH 22] O [MATH 23A]                  
