@@ -16,8 +16,11 @@
 # '\' continues an expression to the next line
 # '[COURSE_NAME]' e.g. [CMPS 101] represents the course
 # 'A' = AND, 'O' = OR, 
-# 'C' = COREQUISITE, meaning [PHYS 6A] C ([PHYS 6L] A [MATH 19B]) represents PHYS 6A 
+# OBSOLETE -- WILL NOT WORK -- 'C' = COREQUISITE, meaning [PHYS 6A] C ([PHYS 6L] A [MATH 19B]) represents PHYS 6A 
 #      having to be taken concurrently with PHYS 6L and MATH 19B
+#
+# REPLACE ALL 'C' WITH 'A', set coreq = [COURSE] in *[] definition
+#
 # Parenthesis, '(' and ')' only can be used in expressions
 # The course entry with a '*' in front of it (e.g. *[CMPS 101]) is the course's entry for prerequisites/corequisites
 # A number in front of parenthesis indicates how many courses, or groupings of courses, must be taken 
@@ -35,14 +38,14 @@
 ################
 ''' From major requirement chart: Complete either: 2 Phys + Labs or 2 Chem + Labs '''
 # ---- REQ ----
-([CMPS 12A] C [CMPS 12L]) O ([CMPS 5J] A [CMPS 11]) O ([CMPE 13] C [CMPE 13L])
-([CMPS 12B] C [CMPS 12M]) # excluding [CMPS 13L] since it hasn't been offered
+([CMPS 12A] A [CMPS 12L]) O ([CMPS 5J] A [CMPS 11]) O ([CMPE 13] A [CMPE 13L])
+([CMPS 12B] A [CMPS 12M]) # excluding [CMPS 13L] since it hasn't been offered
 [MATH 19A] O [MATH 20A]
 [MATH 19B] O [MATH 20B]
 [MATH 23A]
 [CMPE 16]
 [AMS 10] O [MATH 21]
-([CMPE 12] C [CMPE 12L])
+([CMPE 12] A [CMPE 12L])
 [CMPE 110]
 [CMPS 101] 
 [CMPS 104A]
@@ -51,18 +54,19 @@
 [CMPS 112]
 [CMPS 130]
 [CMPE 107 O AMS 131]
-[CMPS 104B] O [CMPS 117] O ([CMPS 161] C [CMPS 161L]) O ([CMPS 162] C [CMPS 162L]) O [CMPS 181] # capstone
-[CMPS 115] O ([CMPS 132] C [CMPS 132W]) O ([CMPS 180] C [CMPS 180W]) O [CMPS 185] O [CMPS 195] O [CMPE 185] # DC requirement
+[CMPS 104B] O [CMPS 117] O ([CMPS 161] A [CMPS 161L]) O ([CMPS 162] A [CMPS 162L]) O [CMPS 181] # capstone
+[CMPS 115] O ([CMPS 132] A [CMPS 132W]) O ([CMPS 180] A [CMPS 180W]) O [CMPS 185] O [CMPS 195] O [CMPE 185] # DC requirement
 # This is going to be hard...But this format makes this manageable!
 # Physics options
-((([PHYS 5A] C [PHYS 5L]) O ([PHYS 6A] C [PHYS 6L])) A ((([PHYS 5B] C [PHYS 5M]) O ([PHYS 6B] C [PHYS 6M])) O \
-([PHYS 5C] C [PHYS 5N]) O ([PHYS 6C] C [PHYS 6N]))) O \
+((([PHYS 5A] A [PHYS 5L]) O ([PHYS 6A] A [PHYS 6L])) A ((([PHYS 5B] A [PHYS 5M]) O ([PHYS 6B] A [PHYS 6M])) O \
+([PHYS 5C] A [PHYS 5N]) O ([PHYS 6C] A [PHYS 6N]))) O \
 # Chem options
-[CHEM 1A] A (([CHEM 1B] C [CHEM 1M]) O ([CHEM 1C] C [CHEM 1N])) 
+[CHEM 1A] A (([CHEM 1B] A [CHEM 1M]) O ([CHEM 1C] A [CHEM 1N])) 
 # Thank goodness the physical sciences part is over...
 2E # may implement later
 # -------------
-
+# DOES NOT SUPPORT () A/O () in prereq
+# MUST BE LIKE (...() A/O () ... [] ...) - if expression has parenthesis, there must be a surrounding pair
 # -- COURSES --
 *[CMPS 12A]
   credits = 5
@@ -80,4 +84,5 @@
   [CMPS 12B] # can leave out 12M since it was a coreq to 12B, also excluding CMPS 13
   [CMPE 16]
   [MATH 19B]
-  [AMS 10] O [MATH 21] O [MATH 22] O [MATH 23A]                  
+  #[AMS 10] O [MATH 21] O [MATH 22] O [MATH 23A] 
+  2([AMS 102] O [MATH 212] O ([MATH 222226] A [MATH 22242344]))                 
