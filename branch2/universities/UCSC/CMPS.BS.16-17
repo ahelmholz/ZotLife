@@ -84,5 +84,9 @@
   [CMPS 12B] # can leave out 12M since it was a coreq to 12B, also excluding CMPS 13
   [CMPE 16]
   [MATH 19B]
-  #[AMS 10] O [MATH 21] O [MATH 22] O [MATH 23A] 
-  2([AMS 102] O [MATH 212] O ([MATH 222226] A [MATH 22242344]))                 
+  [AMS 10] O [MATH 21] O [MATH 22] O [MATH 23A]
+  #2([AMS 102] O [MATH 212] O ([MATH 222226] O [MATH 22242344] O [ce 3] O 9([ce 2] A [C3 3])))
+  #2([CS 999] O [CS 777] ([CM 123] O [CM 7888]) O [CS b] O ([a a] A [b b]) O [CS 5] O ([CS 889] A [C4 adf]))
+
+*[TEST]
+  #3([CM TEST] A ([CE TEST] O [CP TEST] O ([CE] O [CMM])) A [77777] A ([77] A [77777777777]) A [end1] A [end2])
