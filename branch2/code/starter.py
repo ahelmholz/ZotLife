@@ -1,28 +1,23 @@
-import sys
-
-''' This will make sense later -- MUCH thought has gone into it and it is probably really confusing without implementation '''
-class PrereqWrapper:
+class CourseWrapper:
     def __init__(self, number_to_pick = 1):
         # check depth, can have multiple depths
-        # check if type PrereqWrapper or Course when doing work (nesting)
+        # check if type CourseWrapper or Course when doing work (nesting)
         self.number_to_pick = number_to_pick # number needed to be taken out of group to meet requirement
         self.AND = []
         self.OR = []
         
     def __repr__(self):
-        return '{}[AND: {}, OR: {}]'.format(self.number_to_pick, self.AND, self.OR)
-
-# VERY powerful because it combines major info with specific, up to date class info for filtering
+        return '{}{}AND: {}, OR: {}{}'.format(self.number_to_pick, '{', self.AND, self.OR, '}')
 
 class Course:
     def __init__(self, course_name):
         self.course_name = course_name
         self.variables = {}
         self.comment = ''
-        self.isRequiredByMajor = None # since dict will be initialized with all prereqs as well
+        self.isRequiredByMajor = False # since dict will be initialized with all prereqs as well
         self.user_has_taken = None
         # preqs before course
-        # list of Course and PrereqWrapper objects
+        # list of Course and CourseWrapper objects
         self.prereqs = []
         self.coreq_list = []
         self.classes = [] # loaded from database
@@ -49,10 +44,14 @@ class Course:
         if course_obj not in self.prereqs:
             self.prereqs.append(course_obj)
 
-    def __str__(self):
+    def returnInfo(self):
         return 'Course name: {}\n\tvars: {}\n\tcomment: {}\n\tprereq_list: {}\n\tpreq_for_list: {}\n\t' \
-               'coreq_list: {}'.format(
-            self.course_name, self.variables, self.comment, self.prereqs, self.is_prereq_for, self.coreq_list)
+               'coreq_list: {}\n\tisRequired: {}'.format(
+            self.course_name, self.variables, self.comment, self.prereqs, self.is_prereq_for, self.coreq_list,
+            self.isRequiredByMajor)
+
+    def __str__(self):
+        return self.course_name
 
     def __repr__(self):
         return self.course_name
@@ -166,92 +165,218 @@ def load_major_courses_into_data_structure(major_file):
     # when '(' is reached, prereq wrapper ref is pushed on stack
     # when ')' is reached, prereq wrapper ref is popped from stack
     # MUST have index as 0 passed in at first to reset function
-    def recur_parse(index, line, working_course, course_dict):
+    
+    # for parsing 2nd half of file (course prereqs)
+    def recur_parse_prereqs(index, line, working_course, course_dict):
         if index == 0:
-            recur_parse.wrapper_stack = []
-            recur_parse.isFirst = True
-            recur_parse.lastOperator = 'A'  # defaults to AND
-            recur_parse.char_in_course = False  # to say whether recursive function is inside of a course name [] or out
-            recur_parse.course_name = ''
-            recur_parse.temp_course = None
-            recur_parse.firstCourseEntered = False
+            recur_parse_prereqs.wrapper_stack = []
+            recur_parse_prereqs.isFirst = True
+            recur_parse_prereqs.lastOperator = 'A'  # defaults to AND
+            recur_parse_prereqs.char_in_course = False  # to say whether recursive function is inside of a course name [] or out
+            recur_parse_prereqs.course_name = ''
+            recur_parse_prereqs.temp_course = None
+            recur_parse_prereqs.firstCourseEntered = False
+            recur_parse_prereqs.last_prereq_operator = 'A'
+            recur_parse_prereqs.isFirstWrapper = True
         # base case
         if index == len(line) - 1 or len(line) < 2:
             return
         if line[index] == '(':
+            recur_parse_prereqs.last_prereq_operator = recur_parse_prereqs.lastOperator
             if index > 0 and line[index - 1].isdigit():
-                recur_parse.wrapper_stack.append(PrereqWrapper(int(line[index - 1])))
+                recur_parse_prereqs.wrapper_stack.append(CourseWrapper(int(line[index - 1])))
             else:
-                recur_parse.wrapper_stack.append(PrereqWrapper())
+                recur_parse_prereqs.wrapper_stack.append(CourseWrapper())
             # at this point, top of stack is new wrapper
-            if recur_parse.isFirst:
-                working_course.add_prereq(recur_parse.wrapper_stack[-1])
-                recur_parse.isFirst = False
+            if recur_parse_prereqs.isFirst:
+                working_course.add_prereq(recur_parse_prereqs.wrapper_stack[-1])
+                recur_parse_prereqs.isFirst = False
             else:
-                if recur_parse.lastOperator == 'A':
-                    recur_parse.wrapper_stack[-2].AND.append(recur_parse.wrapper_stack[-1])
+                if recur_parse_prereqs.isFirstWrapper:
+                    recur_parse_prereqs.isFirstWrapper = False
+                    A_found = False
+                    count = 0
+                    real_count = 0
+                    for i in range(0, len(line)):
+                        if line[i] == '(':
+                            count += 1
+                            real_count += 1
+                        elif line[i] == ')':
+                            count -= 1
+                        if count == 1 and real_count > count:
+                            if ' A ' in line[i - 2:i+5]:
+                                A_found = True # else OR
+                                break
+                            elif ' O ' in line[i - 2:i+5]:
+                                break
+                            else:
+                                print("ERROR in parsing 3333")
+                                print(line[i - 2:i+5])
+                    if A_found:
+                        recur_parse_prereqs.wrapper_stack[-2].AND.append(recur_parse_prereqs.wrapper_stack[-1])
+                    else: # OR
+                        recur_parse_prereqs.wrapper_stack[-2].OR.append(recur_parse_prereqs.wrapper_stack[-1])
+
                 else:
-                    recur_parse.wrapper_stack[-2].OR.append(recur_parse.wrapper_stack[-1])
-            recur_parse.firstCourseEntered = False
+                    if recur_parse_prereqs.last_prereq_operator == 'A':
+                        recur_parse_prereqs.wrapper_stack[-2].AND.append(recur_parse_prereqs.wrapper_stack[-1])
+                    else:
+                        recur_parse_prereqs.wrapper_stack[-2].OR.append(recur_parse_prereqs.wrapper_stack[-1])
+            recur_parse_prereqs.firstCourseEntered = False
         # pop off
         elif line[index] == ')':
-            recur_parse.wrapper_stack = recur_parse.wrapper_stack[0:-1]
-            if len(recur_parse.wrapper_stack) == 0:
+            recur_parse_prereqs.wrapper_stack = recur_parse_prereqs.wrapper_stack[0:-1]
+            if len(recur_parse_prereqs.wrapper_stack) == 0:
                 line = ''
-                recur_parse(index + 1, line, working_course, course_dict)
-        elif not recur_parse.char_in_course and line[index] == 'A':
-            recur_parse.lastOperator = 'A'
-        elif not recur_parse.char_in_course and line[index] == 'O':
-            recur_parse.lastOperator = 'O'
+                recur_parse_prereqs(index + 1, line, working_course, course_dict)
+        elif not recur_parse_prereqs.char_in_course and line[index] == 'A':
+            recur_parse_prereqs.lastOperator = 'A'
+        elif not recur_parse_prereqs.char_in_course and line[index] == 'O':
+            recur_parse_prereqs.lastOperator = 'O'
         elif line[index] == '[':
-            recur_parse.char_in_course = True
+            recur_parse_prereqs.char_in_course = True
         elif line[index] == ']':
-            recur_parse.char_in_course = False
-            if recur_parse.course_name not in course_dict:
-                course_dict[recur_parse.course_name] = Course(recur_parse.course_name)
-                course_dict[recur_parse.course_name].add_is_prereq_for(working_course)
-                #working_course.add_prereq(course_dict[recur_parse.course_name])
-                if not recur_parse.firstCourseEntered:
-                    if recur_parse.temp_course is not None:
-                        if recur_parse.lastOperator == 'A':
-                            if recur_parse.temp_course not in course_dict:
-                                course_dict[recur_parse.temp_course] = Course(recur_parse.temp_course)
-                            course_dict[recur_parse.temp_course].add_is_prereq_for(working_course)
-                            #working_course.add_prereq(course_dict[recur_parse.temp_course])
-                            recur_parse.wrapper_stack[-2].AND.append(course_dict[recur_parse.temp_course])
-                        else:
-                            if recur_parse.temp_course not in course_dict:
-                                course_dict[recur_parse.temp_course] = Course(recur_parse.temp_course)
-                            course_dict[recur_parse.temp_course].add_is_prereq_for(working_course)
-                            #working_course.add_prereq(course_dict[recur_parse.temp_course])
-                            recur_parse.wrapper_stack[-2].OR.append(course_dict[recur_parse.temp_course])
-                    recur_parse.temp_course = recur_parse.course_name
-                    recur_parse.firstCourseEntered = True
-                elif recur_parse.lastOperator == 'A':
-                    recur_parse.wrapper_stack[-1].AND.append(course_dict[recur_parse.course_name])
-                    if recur_parse.temp_course is not None:
-                        if recur_parse.temp_course not in course_dict:
-                            course_dict[recur_parse.temp_course] = Course(recur_parse.temp_course)
-                        course_dict[recur_parse.temp_course].add_is_prereq_for(working_course)
-                        #working_course.add_prereq(course_dict[recur_parse.temp_course])
-                        recur_parse.wrapper_stack[-1].AND.append(course_dict[recur_parse.temp_course])
-                        recur_parse.temp_course = None
+            recur_parse_prereqs.char_in_course = False
+            if recur_parse_prereqs.course_name not in course_dict:
+                course_dict[recur_parse_prereqs.course_name] = Course(recur_parse_prereqs.course_name)
+                course_dict[recur_parse_prereqs.course_name].add_is_prereq_for(working_course)
+            if not recur_parse_prereqs.firstCourseEntered:
+                if recur_parse_prereqs.temp_course is not None:
+                    if recur_parse_prereqs.lastOperator == 'A':
+                        if recur_parse_prereqs.temp_course not in course_dict:
+                            course_dict[recur_parse_prereqs.temp_course] = Course(recur_parse_prereqs.temp_course)
+                        course_dict[recur_parse_prereqs.temp_course].add_is_prereq_for(working_course)
+                        recur_parse_prereqs.wrapper_stack[-2].AND.append(course_dict[recur_parse_prereqs.temp_course])
+                    else:
+                        if recur_parse_prereqs.temp_course not in course_dict:
+                            course_dict[recur_parse_prereqs.temp_course] = Course(recur_parse_prereqs.temp_course)
+                        course_dict[recur_parse_prereqs.temp_course].add_is_prereq_for(working_course)
+                        recur_parse_prereqs.wrapper_stack[-2].OR.append(course_dict[recur_parse_prereqs.temp_course])
+                recur_parse_prereqs.temp_course = recur_parse_prereqs.course_name
+                recur_parse_prereqs.firstCourseEntered = True
+            elif recur_parse_prereqs.lastOperator == 'A':
+                recur_parse_prereqs.wrapper_stack[-1].AND.append(course_dict[recur_parse_prereqs.course_name])
+                if recur_parse_prereqs.temp_course is not None:
+                    if recur_parse_prereqs.temp_course not in course_dict:
+                        course_dict[recur_parse_prereqs.temp_course] = Course(recur_parse_prereqs.temp_course)
+                    course_dict[recur_parse_prereqs.temp_course].add_is_prereq_for(working_course)
+                    recur_parse_prereqs.wrapper_stack[-1].AND.append(course_dict[recur_parse_prereqs.temp_course])
+                    recur_parse_prereqs.temp_course = None
+            else:
+                recur_parse_prereqs.wrapper_stack[-1].OR.append(course_dict[recur_parse_prereqs.course_name])
+                if recur_parse_prereqs.temp_course is not None:
+                    if recur_parse_prereqs.temp_course not in course_dict:
+                        course_dict[recur_parse_prereqs.temp_course] = Course(recur_parse_prereqs.temp_course)
+                    course_dict[recur_parse_prereqs.temp_course].add_is_prereq_for(working_course)
+                    recur_parse_prereqs.wrapper_stack[-1].OR.append(course_dict[recur_parse_prereqs.temp_course])
+                    recur_parse_prereqs.temp_course = None
+            recur_parse_prereqs.course_name = ''
+        elif recur_parse_prereqs.char_in_course:
+            recur_parse_prereqs.course_name += line[index]
+        recur_parse_prereqs(index + 1, line, working_course, course_dict)
+
+    # for parsing major requirements (first half of file)
+    # preconditions same as recur_parse_prereqs
+    def recur_parse_major_reqs(index, line, major_list, course_dict):
+        if index == 0:
+            recur_parse_major_reqs.wrapper_stack = []
+            recur_parse_major_reqs.isFirst = True
+            recur_parse_major_reqs.lastOperator = 'A'  # defaults to AND
+            recur_parse_major_reqs.char_in_course = False  # to say whether recursive function is inside of a course name [] or out
+            recur_parse_major_reqs.course_name = ''
+            recur_parse_major_reqs.temp_course = None
+            recur_parse_major_reqs.firstCourseEntered = False
+            recur_parse_major_reqs.last_prereq_operator = 'A'
+            recur_parse_major_reqs.isFirstWrapper = True
+        # base case
+        if index == len(line) - 1 or len(line) < 2:
+            return
+        if line[index] == '(':
+            recur_parse_major_reqs.last_prereq_operator = recur_parse_major_reqs.lastOperator
+            if index > 0 and line[index - 1].isdigit():
+                recur_parse_major_reqs.wrapper_stack.append(CourseWrapper(int(line[index - 1])))
+            else:
+                recur_parse_major_reqs.wrapper_stack.append(CourseWrapper())
+            # at this point, top of stack is new wrapper
+            if recur_parse_major_reqs.isFirst:
+                major_list.append(recur_parse_major_reqs.wrapper_stack[-1])
+                recur_parse_major_reqs.isFirst = False
+            else:
+                if recur_parse_major_reqs.isFirstWrapper:
+                    recur_parse_major_reqs.isFirstWrapper = False
+                    A_found = False
+                    count = 0
+                    real_count = 0
+                    for i in range(0, len(line)):
+                        if line[i] == '(':
+                            count += 1
+                            real_count += 1
+                        elif line[i] == ')':
+                            count -= 1
+                        if count == 1 and real_count > count:
+                            if ' A ' in line[i - 2:i + 5]:
+                                A_found = True  # else OR
+                                break
+                            elif ' O ' in line[i - 2:i + 5]:
+                                break
+                            else:
+                                print("ERROR in parsing 338833")
+                                print(line[i - 2:i + 5])
+                    if A_found:
+                        recur_parse_major_reqs.wrapper_stack[-2].AND.append(recur_parse_major_reqs.wrapper_stack[-1])
+                    else:  # OR
+                        recur_parse_major_reqs.wrapper_stack[-2].OR.append(recur_parse_major_reqs.wrapper_stack[-1])
+
                 else:
-                    recur_parse.wrapper_stack[-1].OR.append(course_dict[recur_parse.course_name])
-                    if recur_parse.temp_course is not None:
-                        if recur_parse.temp_course not in course_dict:
-                            course_dict[recur_parse.temp_course] = Course(recur_parse.temp_course)
-                        course_dict[recur_parse.temp_course].add_is_prereq_for(working_course)
-                        #working_course.add_prereq(course_dict[recur_parse.temp_course])
-                        recur_parse.wrapper_stack[-1].OR.append(course_dict[recur_parse.temp_course])
-                        recur_parse.temp_course = None
-            recur_parse.course_name = ''
-        elif recur_parse.char_in_course:
-            recur_parse.course_name += line[index]
-        recur_parse(index + 1, line, working_course, course_dict)
+                    if recur_parse_major_reqs.last_prereq_operator == 'A':
+                        recur_parse_major_reqs.wrapper_stack[-2].AND.append(recur_parse_major_reqs.wrapper_stack[-1])
+                    else:
+                        recur_parse_major_reqs.wrapper_stack[-2].OR.append(recur_parse_major_reqs.wrapper_stack[-1])
+            recur_parse_major_reqs.firstCourseEntered = False
+        # pop off
+        elif line[index] == ')':
+            recur_parse_major_reqs.wrapper_stack = recur_parse_major_reqs.wrapper_stack[0:-1]
+            if len(recur_parse_major_reqs.wrapper_stack) == 0:
+                line = ''
+                recur_parse_major_reqs(index + 1, line, major_list, course_dict)
+        elif not recur_parse_major_reqs.char_in_course and line[index] == 'A':
+            recur_parse_major_reqs.lastOperator = 'A'
+        elif not recur_parse_major_reqs.char_in_course and line[index] == 'O':
+            recur_parse_major_reqs.lastOperator = 'O'
+        elif line[index] == '[':
+            recur_parse_major_reqs.char_in_course = True
+        elif line[index] == ']':
+            recur_parse_major_reqs.char_in_course = False
+            if recur_parse_major_reqs.course_name not in course_dict:
+                print('{} does not have a course entry. Exiting.'.format(recur_parse_major_reqs.course_name))
+                exit()
+            course_dict[recur_parse_major_reqs.course_name].isRequiredByMajor = True
+            if not recur_parse_major_reqs.firstCourseEntered:
+                if recur_parse_major_reqs.temp_course is not None:
+                    if recur_parse_major_reqs.lastOperator == 'A':
+                        recur_parse_major_reqs.wrapper_stack[-2].AND.append(
+                            course_dict[recur_parse_major_reqs.temp_course])
+                    else:
+                        recur_parse_major_reqs.wrapper_stack[-2].OR.append(
+                            course_dict[recur_parse_major_reqs.temp_course])
+                recur_parse_major_reqs.temp_course = recur_parse_major_reqs.course_name
+                recur_parse_major_reqs.firstCourseEntered = True
+            elif recur_parse_major_reqs.lastOperator == 'A':
+                recur_parse_major_reqs.wrapper_stack[-1].AND.append(course_dict[recur_parse_major_reqs.course_name])
+                if recur_parse_major_reqs.temp_course is not None:
+                    recur_parse_major_reqs.wrapper_stack[-1].AND.append(course_dict[recur_parse_major_reqs.temp_course])
+                    recur_parse_major_reqs.temp_course = None
+            else:
+                recur_parse_major_reqs.wrapper_stack[-1].OR.append(course_dict[recur_parse_major_reqs.course_name])
+                if recur_parse_major_reqs.temp_course is not None:
+                    recur_parse_major_reqs.wrapper_stack[-1].OR.append(course_dict[recur_parse_major_reqs.temp_course])
+                    recur_parse_major_reqs.temp_course = None
+            recur_parse_major_reqs.course_name = ''
+        elif recur_parse_major_reqs.char_in_course:
+            recur_parse_major_reqs.course_name += line[index]
+        recur_parse_major_reqs(index + 1, line, major_list, course_dict)
 
     # put courses in dictionary for loading all info easily and efficiently
-    # will make objects from below
     course_dict = {}
 
     # will be a tuple, the first string being the comment to the user about the major, the second being the remaining text
@@ -287,9 +412,8 @@ def load_major_courses_into_data_structure(major_file):
                 # process expression here
                 # is var?
                 if '=' in line:
-                    # NOTE: get important variables here, if not they are put into generic course variabes
+                    # NOTE: get important variables here, if not they are put into generic course variables
                     temp = [i.strip() for i in line.split('=')]
-                    # NOTE: some redundancy with coreq stuff, 'C' and 'coreq =' are parsed to be safe
                     if 'coreq' in temp[0]:
                         if ',' not in temp[1]:
                             name = temp[1][1:-1]
@@ -326,7 +450,7 @@ def load_major_courses_into_data_structure(major_file):
                             # if there is no ( in the line, line must only have one type of operator
                             if ' A ' in line:
                                 # create wrapper
-                                prw = PrereqWrapper()
+                                prw = CourseWrapper()
                                 temp = line.split(' A ')
                                 temp_2 = [i.strip()[1:-1] for i in temp if '[' in i and ']' in i]
                                 for name in temp_2:
@@ -338,7 +462,7 @@ def load_major_courses_into_data_structure(major_file):
                                 working_course.add_prereq(prw)
                             elif ' O ' in line:
                                 # create wrapper
-                                prw = PrereqWrapper()
+                                prw = CourseWrapper()
                                 temp = line.split(' O ')
                                 temp_2 = [i.strip()[1:-1] for i in temp if '[' in i and ']' in i]
                                 for name in temp_2:
@@ -353,22 +477,12 @@ def load_major_courses_into_data_structure(major_file):
                                 print_error(-1)
                         # could have depth
                         else:
-                            recur_parse(0,line.strip(), working_course, course_dict)
+                            recur_parse_prereqs(0,line.strip(), working_course, course_dict)
 
                 course_dict[working_course.course_name] = working_course
                 local_expression = ''
-    ###
-    for key, val in course_dict.items():
-        print(val)
-        print()
-    ###
-    """ ******************* WORKING HERE ******************* """
-    # TODO: TEST, continue coding below
-    # take stuff from above
-    # add to course if it is required
-    # add to coreqs?
-    # process major requirements
     expression_terminated = None
+    major_list = []
     for line in first_half.splitlines():
         if '\\' in line.strip()[-1:]:
             expression_terminated = False
@@ -376,21 +490,57 @@ def load_major_courses_into_data_structure(major_file):
         else:
             expression_terminated = True
             expression += line
-        if expression_terminated:
+        if expression_terminated and len(expression) > 0:
+            # if elective
+            if len(expression) < 5 and 'E' in expression:
+                print('\n(((( Electives need to be handled ))))\n')
+                # TODO: handle electives
             # process expression here
             #print(expression)
-            # WORKING HERE 
+            elif '(' in expression:
+                recur_parse_major_reqs(0, expression, major_list, course_dict)
+                #print(major_list)
+            elif expression.count('[') > 1:
+                # if there is no ( in the line, line must only have one type of operator
+                if ' A ' in line:
+                    # create wrapper
+                    prw = CourseWrapper()
+                    temp = line.split(' A ')
+                    temp_2 = [i.strip()[1:-1] for i in temp if '[' in i and ']' in i]
+                    for name in temp_2:
+                        if name not in course_dict:
+                            print('No entry for {} in courses'.format(name))
+                            exit()
+                        course_dict[name].isRequiredByMajor = True
+                        prw.AND.append(course_dict[name])
+                    major_list.append(prw)
+                elif ' O ' in line:
+                    # create wrapper
+                    prw = CourseWrapper()
+                    temp = line.split(' O ')
+                    temp_2 = [i.strip()[1:-1] for i in temp if '[' in i and ']' in i]
+                    for name in temp_2:
+                        if name not in course_dict:
+                            print('No entry for {} in courses'.format(name))
+                            exit()
+                        course_dict[name].isRequiredByMajor = True
+                        prw.OR.append(course_dict[name])
+                    major_list.append(prw)
+                else:
+                    print("Something went wrong 87787 - random number to search in code")
+                    print_error(-1)
+            # single course
+            else:
+                name = line[line.index('[') + 1: line.index(']')]
+                if name not in course_dict:
+                    print('{} does not have a course entry'.format(name))
+                    exit()
+                major_list.append(course_dict[name])
+                course_dict[name].isRequiredByMajor = True
             expression = ''
 
-
-
-
-    # define what needs to be returned
-    # return the courses here
-    """"""""""""""""""""""""""
-
-    # data structure will have what's required to get degree, and also courses in dict
-    return True
+    # function returns tuple, [0] is major comment, [1] is list of major requirements, [2] is dictionary of course info
+    return (major_strings[0], major_list, course_dict)
 
 """ JUST FOR TESTING -- Make into functions/API later"""
 #institution = input("Institution: ")
@@ -403,8 +553,26 @@ def load_major_courses_into_data_structure(major_file):
 #else:
 #    specialization = input("What is your specialization?")
 
+# TODO: move TODOs
 # TODO: get classes already taken
-# TODO: load school info file
+# TODO: load school info file -- get max units allowed per time - default if not
+# TODO: check for course coreqs when building schedule
+# TODO: make into API-ish format
+# TODO: update major template file to new specs
+# TODO: make actual major file and test
+# TODO: write algorithms to step through and build schedule
+
+
+def printDebugInfo(info_tuple):
+    print("******  MAJOR STRING *******")
+    print(info_tuple[0])
+    print("\n*** MAJOR REQUIREMENTS ***")
+    for x in info_tuple[1]:
+        print('\t' + str(x))
+    print("\n******** COURSES ********")
+    for key, value in info_tuple[2].items():
+        print(value.returnInfo())
+        print()
 
 
 # build file path off of info
@@ -415,9 +583,9 @@ def load_major_courses_into_data_structure(major_file):
 major_file = open("../universities/UCSC/CMPS.BS.16-17", "r")
 """"""
 # will load info from the major file, make objects with info from both file and course DB
-courses = None
 try:
     courses = load_major_courses_into_data_structure(major_file)
+    printDebugInfo(courses)
 except Exception as e:
     print(str(e))
     print('We do not support this major at this University yet.')
