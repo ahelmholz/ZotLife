@@ -1,0 +1,18 @@
+''' Out of the five courses allowed to be selected from the group, no more than two may be lower division courses. '''
+# ---- REQ ----
+[SOCIOL 1]
+[SOCIOL 2] O [SOCIOL 3]
+[SOCIOL 110] A [SOCIOL 120] A [SOCIOL 180A]
+5([SOCIOL 31] O [SOCIOL 41] O [SOCIOL 43] O [SOCIOL 44] O [SOCIOL 56] O [SOCIOL 62] O [SOCIOL 63] \
+O [SOCIOL 64] O [SOCIOL 68A]
+
+
+[SOCIOL 175B])
+
+# -- COURSES --
+*[SOCIOL 1]
+  credits = 4
+
+*[SOCIOL 31]
+  credits =
+  no_more_lower_divsion_than = 2 # special variable 
