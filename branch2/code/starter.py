@@ -565,6 +565,8 @@ def load_major_courses_into_data_structure(major_file):
 # TODO: build in check for if class has a typo -- cross check with course DB
 # TODO: implement AP checker for AP courses -- courses in .maj will be [AP]
 # TODO: add blacklist variables to courses e.g. 'CANNOT_TAKE_FOR_CREDIT_WITH = []' -- add to Sociology
+# TODO: add variable functionality for only 2 of this type can be taken, e.g. 2_4 = True, id = 4 would equate to something like
+# TODO: (cont)      2 courses may be taken from the courses with id 4
 
 
 def printDebugInfo(info_tuple):
