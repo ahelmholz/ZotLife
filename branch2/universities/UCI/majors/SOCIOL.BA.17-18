@@ -1,18 +1,130 @@
-''' Out of the five courses allowed to be selected from the group, no more than two may be lower division courses. '''
+# Not going to lie, I honestly chose sociology because it's easy.
+# will handle this part with code
+# ''' Out of the five courses allowed to be selected from the group, no more than two may be lower division courses. '''
+# TODO: add blacklist
+# TODO: add ACT/SAT/AP variables
 # ---- REQ ----
 [SOCIOL 1]
 [SOCIOL 2] O [SOCIOL 3]
 [SOCIOL 110] A [SOCIOL 120] A [SOCIOL 180A]
 5([SOCIOL 31] O [SOCIOL 41] O [SOCIOL 43] O [SOCIOL 44] O [SOCIOL 56] O [SOCIOL 62] O [SOCIOL 63] \
-O [SOCIOL 64] O [SOCIOL 68A]
-
-
-[SOCIOL 175B])
+O [SOCIOL 64] O [SOCIOL 68A] O [SOCIOL 135] O [SOCIOL 138] O [SOCIOL 141] O [SOCIOL 144] O [SOCIOL 145] \
+O [SOCIOL 150] O [SOCIOL 158C] O [SOCIOL 161] O [SOCIOL 164W] O [SOCIOL 166] O [SOCIOL 167A] O [SOCIOL 171] \
+O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
+2E # 'Two additional Sociology courses, one of which must be upper-division' # TODO: store requirements in some format in this line
 
 # -- COURSES --
 *[SOCIOL 1]
-  credits = 4
-
+  units = 4  # TODO: a way of saying 'units' or 'credits' appropriately per school -- will just read whatever .maj uses
+*[SOCIOL 2]
+  units = 4
+*[SOCIOL 3]
+  units = 4
+*[SOCIOL 110]
+  units = 4
+*[SOCIOL 120]
+  units = 4
+*[SOCIOL 180A]
+  units = 4
+  [SOCIOL 110]
 *[SOCIOL 31]
-  credits =
-  no_more_lower_divsion_than = 2 # special variable 
+  units = 4
+*[SOCIOL 41]
+  units = 4
+*[SOCIOL 43]
+  units = 4
+*[SOCIOL 44]
+  units = 4
+*[SOCIOL 56]
+  units = 4
+*[SOCIOL 62]
+  units = 4
+*[SOCIOL 63]
+  units = 4
+*[SOCIOL 64]
+  units = 4
+*[SOCIOL 68A]
+  units = 4
+*[SOCIOL 135]
+  units = 4
+*[SOCIOL 138]
+  units = 4
+  (([ANTHRO 10A] A [ANTHRO 10B] A [ANTHRO 10C]) O ([SOCIOL 10A] A [SOCIOL 10B] A [SOCIOL 10C]) O \
+  ([SOC SCI 10A] A [SOC SCI 10B] A [SOC SCI 10C]) O ([MATH 2A] A [MATH 2B] A ([STATS 7] O [MGMT 7])))
+*[SOCIOL 141]
+  units = 4
+*[SOCIOL 144]
+  units = 4
+*[SOCIOL 145]
+  units = 4
+*[SOCIOL 150]
+  units = 4
+*[SOCIOL 158C]
+  units = 4
+*[SOCIOL 161]
+  units = 4
+*[SOCIOL 164W]
+  $ 'Prerequisite: Satisfactory completion of the Lower-Division Writing requirement. Restriction: \
+    Upper-division students only.'
+  units = 4
+*[SOCIOL 166]
+  units = 4
+*[SOCIOL 167A]
+  units = 4
+*[SOCIOL 171]
+  units = 4
+*[SOCIOL 173]
+  units = 4
+*[SOCIOL 174]
+  units = 4
+  ([SOCIOL 1] O [POL SCI 6A] O [ECON 1])
+*[SOCIOL 175B]
+  units = 4
+# prereqs of courses
+*[ANTHRO 10A]
+  units = 4
+*[ANTHRO 10B]
+  units = 4
+  [ANTHRO 10A]
+*[ANTHRO 10C]
+  units = 4
+  [ANTHRO 10B]
+*[SOCIOL 10A]
+  units = 4
+*[SOCIOL 10B]
+  units = 4
+  [SOCIOL 10A]
+*[SOCIOL 10C]
+  units = 4
+  [SOCIOL 10B]
+*[SOC SCI 10A]
+  $ 'Lower-division students only. Social Science Majors have first consideration for enrollment. ' #\
+    # blacklist -- not be taken for credit if taken after or concurrently with ECON 15A'
+  units = 4
+  coreq = [SOC SCI 3A]
+*[SOC SCI 10B]
+  units = 5
+  [SOC SCI 10A]
+*[SOC SCI 10C]
+  units = 4
+  [SOC SCI 10B]
+*[MATH 2A]
+  $ 'Please check math placement requirements.' # requirements are quite low
+  units = 4
+*[MATH 2B]
+  units = 4
+  [MATH 2A] O [MATH 5A] O [AP]
+*[STATS 7]
+  units = 4
+*[MGMT 7]
+  units = 4
+*[POL SCI 6A]
+  units = 4
+*[ECON 1]
+  units = 4
+*[SOC SCI 3A]
+  coreq = [SOC SCI 10A]
+  units = 4
+*[MATH 5A]
+  units = 4
+  $ 'Please check math placement requirements'

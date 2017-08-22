@@ -14,7 +14,8 @@ class Course:
         self.course_name = course_name
         self.variables = {}
         self.comment = ''
-        self.isRequiredByMajor = False # since dict will be initialized with all prereqs as well
+        # isRequiredOption means course is in major outline (may be optional -- but still in major outline)
+        self.isRequiredOption = False # since dict will be initialized with all prereqs as well
         self.user_has_taken = None
         # preqs before course
         # list of Course and CourseWrapper objects
@@ -46,9 +47,9 @@ class Course:
 
     def returnInfo(self):
         return 'Course name: {}\n\tvars: {}\n\tcomment: {}\n\tprereq_list: {}\n\tpreq_for_list: {}\n\t' \
-               'coreq_list: {}\n\tisRequired: {}'.format(
+               'coreq_list: {}\n\tisRequiredOption: {}'.format(
             self.course_name, self.variables, self.comment, self.prereqs, self.is_prereq_for, self.coreq_list,
-            self.isRequiredByMajor)
+            self.isRequiredOption)
 
     def __str__(self):
         return self.course_name
@@ -350,7 +351,7 @@ def load_major_courses_into_data_structure(major_file):
             if recur_parse_major_reqs.course_name not in course_dict:
                 print('{} does not have a course entry. Exiting.'.format(recur_parse_major_reqs.course_name))
                 exit()
-            course_dict[recur_parse_major_reqs.course_name].isRequiredByMajor = True
+            course_dict[recur_parse_major_reqs.course_name].isRequiredOption = True
             if not recur_parse_major_reqs.firstCourseEntered:
                 if recur_parse_major_reqs.temp_course is not None:
                     if recur_parse_major_reqs.lastOperator == 'A':
@@ -406,14 +407,15 @@ def load_major_courses_into_data_structure(major_file):
                 local_expression += line[0:-1]
             else:
                 local_expression_terminated = True
-                local_expression += ' ' + line # in case of line being continued =
+                #local_expression += ' ' + local_expression # in case of local_expression being continued =
+                local_expression = local_expression.strip() + ' ' + line.strip()
                 local_expression = local_expression.strip()
             if local_expression_terminated:
                 # process expression here
                 # is var?
-                if '=' in line:
+                if '=' in local_expression:
                     # NOTE: get important variables here, if not they are put into generic course variables
-                    temp = [i.strip() for i in line.split('=')]
+                    temp = [i.strip() for i in local_expression.split('=')]
                     if 'coreq' in temp[0]:
                         if ',' not in temp[1]:
                             name = temp[1][1:-1]
@@ -432,26 +434,26 @@ def load_major_courses_into_data_structure(major_file):
                     else:
                         working_course.add_var(temp[0], temp[1])
                 # course comment
-                elif '$' in line:
-                    line = line[line.index("'") + 1:]
-                    working_course.add_comment(line[:line.index("'")].strip())
+                elif '$' in local_expression:
+                    local_expression = local_expression[local_expression.index("'") + 1:]
+                    working_course.add_comment(local_expression[:local_expression.index("'")].strip())
                 # prereqs
-                elif '[' in line:
+                elif '[' in local_expression:
                     # no prereq wrapper needed
-                    if line.count('[') == 1:
-                        name = line[line.index('[') + 1: line.index(']')]
+                    if local_expression.count('[') == 1:
+                        name = local_expression[local_expression.index('[') + 1: local_expression.index(']')]
                         if name not in course_dict:
                             course_dict[name] = Course(name)
                         course_dict[name].add_is_prereq_for(working_course)
                         working_course.add_prereq(course_dict[name])
                     # wrapper needed
                     else:
-                        if '(' not in line and ')' not in line:
-                            # if there is no ( in the line, line must only have one type of operator
-                            if ' A ' in line:
+                        if '(' not in local_expression and ')' not in local_expression:
+                            # if there is no ( in the local_expression, local_expression must only have one type of operator
+                            if ' A ' in local_expression:
                                 # create wrapper
                                 prw = CourseWrapper()
-                                temp = line.split(' A ')
+                                temp = local_expression.split(' A ')
                                 temp_2 = [i.strip()[1:-1] for i in temp if '[' in i and ']' in i]
                                 for name in temp_2:
                                     if name not in course_dict:
@@ -460,10 +462,10 @@ def load_major_courses_into_data_structure(major_file):
                                             course_dict[name].add_is_prereq_for(working_course)
                                     prw.AND.append(course_dict[name])
                                 working_course.add_prereq(prw)
-                            elif ' O ' in line:
+                            elif ' O ' in local_expression:
                                 # create wrapper
                                 prw = CourseWrapper()
-                                temp = line.split(' O ')
+                                temp = local_expression.split(' O ')
                                 temp_2 = [i.strip()[1:-1] for i in temp if '[' in i and ']' in i]
                                 for name in temp_2:
                                     if name not in course_dict:
@@ -477,7 +479,7 @@ def load_major_courses_into_data_structure(major_file):
                                 print_error(-1)
                         # could have depth
                         else:
-                            recur_parse_prereqs(0,line.strip(), working_course, course_dict)
+                            recur_parse_prereqs(0,local_expression.strip(), working_course, course_dict)
 
                 course_dict[working_course.course_name] = working_course
                 local_expression = ''
@@ -494,36 +496,36 @@ def load_major_courses_into_data_structure(major_file):
             # if elective
             if len(expression) < 5 and 'E' in expression:
                 print('\n(((( Electives need to be handled ))))\n')
-                # TODO: handle electives
+                # TODO: handle electives -- keep needed vars on this line, e.g. from_upper_div = 2, from_lower_div = 2
             # process expression here
             #print(expression)
             elif '(' in expression:
                 recur_parse_major_reqs(0, expression, major_list, course_dict)
                 #print(major_list)
             elif expression.count('[') > 1:
-                # if there is no ( in the line, line must only have one type of operator
-                if ' A ' in line:
+                # if there is no ( in the expression, expression must only have one type of operator
+                if ' A ' in expression:
                     # create wrapper
                     prw = CourseWrapper()
-                    temp = line.split(' A ')
+                    temp = expression.split(' A ')
                     temp_2 = [i.strip()[1:-1] for i in temp if '[' in i and ']' in i]
                     for name in temp_2:
                         if name not in course_dict:
                             print('No entry for {} in courses'.format(name))
                             exit()
-                        course_dict[name].isRequiredByMajor = True
+                        course_dict[name].isRequiredOption = True
                         prw.AND.append(course_dict[name])
                     major_list.append(prw)
-                elif ' O ' in line:
+                elif ' O ' in expression:
                     # create wrapper
                     prw = CourseWrapper()
-                    temp = line.split(' O ')
+                    temp = expression.split(' O ')
                     temp_2 = [i.strip()[1:-1] for i in temp if '[' in i and ']' in i]
                     for name in temp_2:
                         if name not in course_dict:
                             print('No entry for {} in courses'.format(name))
                             exit()
-                        course_dict[name].isRequiredByMajor = True
+                        course_dict[name].isRequiredOption = True
                         prw.OR.append(course_dict[name])
                     major_list.append(prw)
                 else:
@@ -531,12 +533,12 @@ def load_major_courses_into_data_structure(major_file):
                     print_error(-1)
             # single course
             else:
-                name = line[line.index('[') + 1: line.index(']')]
+                name = expression[expression.index('[') + 1: expression.index(']')]
                 if name not in course_dict:
                     print('{} does not have a course entry'.format(name))
                     exit()
                 major_list.append(course_dict[name])
-                course_dict[name].isRequiredByMajor = True
+                course_dict[name].isRequiredOption = True
             expression = ''
 
     # function returns tuple, [0] is major comment, [1] is list of major requirements, [2] is dictionary of course info
@@ -559,8 +561,10 @@ def load_major_courses_into_data_structure(major_file):
 # TODO: check for course coreqs when building schedule
 # TODO: make into API-ish format
 # TODO: update major template file to new specs
-# TODO: make actual major file and test
 # TODO: write algorithms to step through and build schedule
+# TODO: build in check for if class has a typo -- cross check with course DB
+# TODO: implement AP checker for AP courses -- courses in .maj will be [AP]
+# TODO: add blacklist variables to courses e.g. 'CANNOT_TAKE_FOR_CREDIT_WITH = []' -- add to Sociology
 
 
 def printDebugInfo(info_tuple):
@@ -580,7 +584,8 @@ def printDebugInfo(info_tuple):
 #major_file = get_major_file(institution, major, BS_BA_Other, year_declared_under, specialization)
 
 """ TO SAVE EFFORT DURING TESTING """
-major_file = open("../universities/UCSC/CMPS.BS.16-17", "r")
+#major_file = open("../universities/UCSC/CMPS.BS.16-17", "r")
+major_file = open("../universities/UCI/majors/SOCIOL.BA.17-18")
 """"""
 # will load info from the major file, make objects with info from both file and course DB
 try:
