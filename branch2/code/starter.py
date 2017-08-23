@@ -89,7 +89,7 @@ def print_error(line_num):
     print('An error occurred while parsing major file at line {}. Exiting...'.format(line_num))
     exit()
 
-def check_basic_syntax_and_remove_comments(major_file):
+def check_basic_syntax_and_remove_comments(major_file, debug_enabled=False):
     ret_string = ''
     special_comment = ''
     open_square_count = 0
@@ -108,50 +108,51 @@ def check_basic_syntax_and_remove_comments(major_file):
                     if "'''" in line:
                         special_comment += line
                         break
-                    elif line[i] == '[':
-                        open_square_count += 1
-                        if i > 0:
-                            if line[i - 1] != ' ' and line[i - 1] != '(' and line[i - 1] != '*' and line[i - 1] != ',':
-                                    print("Square bracket can only have (, ',', * or a space outside of it")
-                                    print_error(line_number)
-                    elif line[i] == ']':
-                        if i + 1 < len(line):
-                            if line[i + 1] != ' ' and line[i + 1] != ')' and line[i +1] != '\n' and line[i + 1] != ',':
-                                    print("Square bracket can only have ), ',', \\n or a space outside of it")
-                                    print_error(line_number)
-                        open_square_count -= 1
-                        line_course_count += 1
-                        if open_square_count < 0:
-                            print_error(line_number)
-                    elif line[i] == '(':
-                        open_par_count += 1
-                    elif line[i] == ')':
-                        open_par_count -= 1
-                        if open_par_count < 0:
-                            print_error(line_number)
-                    elif open_square_count == 0 and (line[i] == 'A' or line[i] == 'O'):
-                        line_operator_count += 1
-                        if i > 0:
-                            if line[i - 1] != ' ' and line[i - 1] != '\n' and line[i - 1] != '\\':
-                                    print("A and O must have a space on each side")
-                                    print_error(line_number)
-                        if i + 1 < len(line):
-                            if line[i + 1] != ' ' and line[i + 1] != '\n' and line[i + 1] != '\\':
-                                    print("A and O must have a space on each side")
-                                    print_error(line_number)
-                    if line[i] == '\n' and line_operator_count > line_course_count:
-                        print('More operators than courses')
-                        print_error(-1)
+                    elif debug_enabled:
+                        if line[i] == '[':
+                            open_square_count += 1
+                            if i > 0:
+                                if line[i - 1] != ' ' and line[i - 1] != '(' and line[i - 1] != '*' and line[i - 1] != ',':
+                                        print("Square bracket can only have (, ',', * or a space outside of it")
+                                        print_error(line_number)
+                        elif line[i] == ']':
+                            if i + 1 < len(line):
+                                if line[i + 1] != ' ' and line[i + 1] != ')' and line[i +1] != '\n' and line[i + 1] != ',':
+                                        print("Square bracket can only have ), ',', \\n or a space outside of it")
+                                        print_error(line_number)
+                            open_square_count -= 1
+                            line_course_count += 1
+                            if open_square_count < 0:
+                                print_error(line_number)
+                        elif line[i] == '(':
+                            open_par_count += 1
+                        elif line[i] == ')':
+                            open_par_count -= 1
+                            if open_par_count < 0:
+                                print_error(line_number)
+                        elif open_square_count == 0 and (line[i] == 'A' or line[i] == 'O'):
+                            line_operator_count += 1
+                            if i > 0:
+                                if line[i - 1] != ' ' and line[i - 1] != '\n' and line[i - 1] != '\\':
+                                        print("A and O must have a space on each side")
+                                        print_error(line_number)
+                            if i + 1 < len(line):
+                                if line[i + 1] != ' ' and line[i + 1] != '\n' and line[i + 1] != '\\':
+                                        print("A and O must have a space on each side")
+                                        print_error(line_number)
+                        if line[i] == '\n' and line_operator_count > line_course_count:
+                            print('More operators than courses')
+                            print_error(-1)
                     # add char to ret_object
                     ret_string += line[i]
             else:
                 if line[i] == '\n':
                     ret_string += line[i]
                     ignore_rest_of_line = False
-                    if line_operator_count > line_course_count:
+                    if debug_enabled and (line_operator_count > line_course_count):
                         print('More operators than courses')
                         print_error(-1)
-    if open_square_count > 0 or open_par_count > 0:
+    if debug_enabled and (open_square_count > 0 or open_par_count > 0):
         print_error(-1)
     # remove quotes from special comment
     special_comment = special_comment.replace("'''", "").strip()
@@ -381,7 +382,7 @@ def load_major_courses_into_data_structure(major_file):
     course_dict = {}
 
     # will be a tuple, the first string being the comment to the user about the major, the second being the remaining text
-    major_strings = check_basic_syntax_and_remove_comments(major_file)
+    major_strings = check_basic_syntax_and_remove_comments(major_file, True)
     #print(major_strings[1])
     # at this point, ''' ''' and # are stripped, somewhat valid parenthesis have been checked for
 
@@ -558,15 +559,10 @@ def load_major_courses_into_data_structure(major_file):
 # TODO: move TODOs
 # TODO: get classes already taken
 # TODO: load school info file -- get max units allowed per time - default if not
-# TODO: check for course coreqs when building schedule
+# TODO: check all variables when building schedule
 # TODO: make into API-ish format
-# TODO: update major template file to new specs
 # TODO: write algorithms to step through and build schedule
 # TODO: build in check for if class has a typo -- cross check with course DB
-# TODO: implement AP checker for AP courses -- courses in .maj will be [AP]
-# TODO: add blacklist variables to courses e.g. 'CANNOT_TAKE_FOR_CREDIT_WITH = []' -- add to Sociology
-# TODO: add variable functionality for only 2 of this type can be taken, e.g. 2_4 = True, id = 4 would equate to something like
-# TODO: (cont)      2 courses may be taken from the courses with id 4
 # TODO: enable debug option for my viewing, disable in production (skip error checking if we know it works)
 # -- final safety is already saying we don't support it in case something goes wrong ;)
 
@@ -587,7 +583,6 @@ def printDebugInfo(info_tuple):
 #major_file = get_major_file(institution, major, BS_BA_Other, year_declared_under, specialization)
 
 """ TO SAVE EFFORT DURING TESTING """
-#major_file = open("../universities/UCSC/CMPS.BS.16-17", "r")
 major_file = open("../universities/UCI/majors/SOCIOL.BA.17-18")
 """"""
 # will load info from the major file, make objects with info from both file and course DB

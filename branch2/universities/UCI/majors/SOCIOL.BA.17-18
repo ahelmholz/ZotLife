@@ -1,8 +1,9 @@
+# Check SSU/majors/major.BS.16-17 for info on how to make one of these
+#
 # Not going to lie, I honestly chose sociology because it's easy.
-# will handle this part with code
-# ''' Out of the five courses allowed to be selected from the group, no more than two may be lower division courses. '''
-# TODO: add blacklist
-# TODO: add ACT/SAT/AP variables
+#
+# TODO: handle only taking 2 lower div out of group and rest upper
+#
 # ---- REQ ----
 [SOCIOL 1]
 [SOCIOL 2] O [SOCIOL 3]
@@ -67,6 +68,7 @@ O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
   $ 'Prerequisite: Satisfactory completion of the Lower-Division Writing requirement. Restriction: \
     Upper-division students only.'
   units = 4
+  upper_div_only = True
 *[SOCIOL 166]
   units = 4
 *[SOCIOL 167A]
@@ -98,33 +100,61 @@ O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
   units = 4
   [SOCIOL 10B]
 *[SOC SCI 10A]
-  $ 'Lower-division students only. Social Science Majors have first consideration for enrollment. ' #\
-    # blacklist -- not be taken for credit if taken after or concurrently with ECON 15A'
+  $ 'Lower-division students only. Social Science Majors have first consideration for enrollment. '
+  blacklist = [ECON 15A] # cannot receive credit if taken during or after this course
+  lower_div_only = True
   units = 4
   coreq = [SOC SCI 3A]
 *[SOC SCI 10B]
-  units = 5
+  units = 4
   [SOC SCI 10A]
 *[SOC SCI 10C]
   units = 4
   [SOC SCI 10B]
 *[MATH 2A]
-  $ 'Please check math placement requirements.' # requirements are quite low
+  $ 'Students may also place into this course via the mathematics placement exam' # requirements are quite low
   units = 4
+  ap_calculus_ab = 3 # this score or greater can replace this course
+  sat_math = 650
+  act_math = 29
+*[MATH 1B]
+  units = 4
+  $ 'Students may also place into this course via the mathematics placement exam'
+  sat_math = 450
+  [MATH 1A]
+*[MATH 1A]
+  units = 4 # actually says 'Workload Credit Only.'
 *[MATH 2B]
   units = 4
-  [MATH 2A] O [MATH 5A] O [AP]
+  ap_calculus_ab = 4
+  ap_calculus_bc = 3
+  [MATH 2A] O [MATH 5A]
 *[STATS 7]
   units = 4
+  blacklist = [STATS 110], [STATS 111], [STATS 112]
 *[MGMT 7]
   units = 4
 *[POL SCI 6A]
   units = 4
 *[ECON 1]
   units = 4
+  blacklist = [ECON 20A], [ECON 20B]
 *[SOC SCI 3A]
   coreq = [SOC SCI 10A]
   units = 4
 *[MATH 5A]
   units = 4
   $ 'Please check math placement requirements'
+
+# blacklisted items
+*[ECON 15A]
+  do_not_take = True
+*[STATS 110]
+  do_not_take = True
+*[STATS 111]
+  do_not_take = True
+*[STATS 112]
+  do_not_take = True
+*[ECON 20A]
+  do_not_take = True
+*[ECON 20B]
