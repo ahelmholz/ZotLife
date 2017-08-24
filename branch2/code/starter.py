@@ -15,19 +15,18 @@ class Course:
         self.variables = {}
         self.comment = ''
         # isRequiredOption means course is in major outline (may be optional -- but still in major outline)
-        self.isRequiredOption = False # since dict will be initialized with all prereqs as well
+        self.isRequiredOption = False # since course_dict will be initialized with all prereqs as well
         self.user_has_taken = None
         # preqs before course
         # list of Course and CourseWrapper objects
         self.prereqs = []
         self.coreq_list = []
         self.classes = [] # loaded from database
-        # what is this class a prereq for? - list of course objects
         # user can possibly take these courses after completing this course
         self.is_prereq_for = []
-        # wrapper to say which courses have to be taken(AND/OR)
         # pull/store info from DB?
         # when is it offered?
+        self.course_offered_in = [] # FALL, WINTER, SPRING, SUMMER -- find out/add options from DB?
         # TODO: keep list of CLASSES in course object, with the class class storing discussion sections, specific lab #'s, etc
         # could use old code
 
@@ -61,7 +60,7 @@ class Course:
         if course not in self.is_prereq_for:
             self.is_prereq_for.append(course)
 
-def get_major_file(institution, major, type, catalog_year, specialization=None):
+def get_major_and_school_files(institution, major, type, catalog_year, specialization=None):
     # basic checks of input to function -- won't catch everything (should be done elsewhere)
     # NOTE: revise tests?
     if not institution.isupper():
@@ -77,12 +76,15 @@ def get_major_file(institution, major, type, catalog_year, specialization=None):
     path = '../universities/' + institution + '/majors/' + major + '.' + type + '.' + catalog_year
     if specialization is not None:
         path += '/' + specialization   # NOTE: may move location
-    print(path)
+    #print(path)
+    # TODO: may need to change this if different schools within University are supported
+    school_path = '../universities/' + institution + '/' + institution + '.info'
     try:
-        return open(path, "r")
+        return open(school_path, "r"), open(path, "r")
     except:
         print('We do not support this yet')
         exit()
+
 
 # line numbers provided when able -- if not, -1
 def print_error(line_num):
@@ -158,8 +160,19 @@ def check_basic_syntax_and_remove_comments(major_file, debug_enabled=False):
     special_comment = special_comment.replace("'''", "").strip()
     return (special_comment, ret_string.strip())
 
+def load_school_vars(school_file):
+    school_vars = {}
+    # remove comments
+    for line in school_file:
+        if '#' in line:
+            line = line[0:line.index('#')]
+        if '=' in line:
+            temp = line.split('=')
+            school_vars[temp[0].strip()] = temp[1].strip()
+    return school_vars
+
 # stores info from both .maj file and class database
-def load_major_courses_into_data_structure(major_file):
+def load_major_courses_into_data_structure(major_file, debug_enabled=False):
 
     # recursion makes life easier
     # I don't want to explain how this works
@@ -382,7 +395,7 @@ def load_major_courses_into_data_structure(major_file):
     course_dict = {}
 
     # will be a tuple, the first string being the comment to the user about the major, the second being the remaining text
-    major_strings = check_basic_syntax_and_remove_comments(major_file, True)
+    major_strings = check_basic_syntax_and_remove_comments(major_file, debug_enabled)
     #print(major_strings[1])
     # at this point, ''' ''' and # are stripped, somewhat valid parenthesis have been checked for
 
@@ -545,17 +558,6 @@ def load_major_courses_into_data_structure(major_file):
     # function returns tuple, [0] is major comment, [1] is list of major requirements, [2] is dictionary of course info
     return (major_strings[0], major_list, course_dict)
 
-""" JUST FOR TESTING -- Make into functions/API later"""
-#institution = input("Institution: ")
-#major = input("Major: ")
-#BS_BA_Other = input("BS, BA or other?")
-#year_declared_under = input("What year are you declaring under?")
-#specialization = input("Do you have a specialization? (y/n)")
-#if 'n' in specialization.lower():
-#    specialization = None
-#else:
-#    specialization = input("What is your specialization?")
-
 # TODO: move TODOs
 # TODO: get classes already taken
 # TODO: load school info file -- get max units allowed per time - default if not
@@ -563,10 +565,12 @@ def load_major_courses_into_data_structure(major_file):
 # TODO: make into API-ish format
 # TODO: write algorithms to step through and build schedule
 # TODO: build in check for if class has a typo -- cross check with course DB
-# TODO: enable debug option for my viewing, disable in production (skip error checking if we know it works)
 # -- final safety is already saying we don't support it in case something goes wrong ;)
 
-def printDebugInfo(info_tuple):
+def printDebugInfo(info_tuple, school_vars, major_file, school_file):
+    print("Number of courses in course_dict: {}".format(len(info_tuple[2])))
+    print('Files:')
+    print('{}\n{}\n'.format(major_file.name, school_file.name))
     print("******  MAJOR STRING *******")
     print(info_tuple[0])
     print("\n*** MAJOR REQUIREMENTS ***")
@@ -576,19 +580,59 @@ def printDebugInfo(info_tuple):
     for key, value in info_tuple[2].items():
         print(value.returnInfo())
         print()
-
-
-# build file path off of info
-# try to get file, if not there 'Sorry, we don't support this yet'
-#major_file = get_major_file(institution, major, BS_BA_Other, year_declared_under, specialization)
+    print("\n******** SCHOOL VARS ********")
+    print(school_vars)
 
 """ TO SAVE EFFORT DURING TESTING """
+#TODO: remove this
 major_file = open("../universities/UCI/majors/SOCIOL.BA.17-18")
+school_file = open("../universities/UCI/UCI.info")
+debug = True
 """"""
-# will load info from the major file, make objects with info from both file and course DB
+# will load info from the major/school files, make objects with info from both file and course DB
 try:
-    courses = load_major_courses_into_data_structure(major_file)
-    printDebugInfo(courses)
+
+    courses_info = load_major_courses_into_data_structure(major_file, debug)
+    school_vars = load_school_vars(school_file)
+    if debug:
+        printDebugInfo(courses_info, school_vars, major_file, school_file)
+    major_file.close()
+    school_file.close()
+
+
 except Exception as e:
     print(str(e))
     print('We do not support this major at this University yet.')
+
+# TODO: if script exits with anything but desired output to controller (PhP script or another),
+# TODO(cont):"Say, 'Sorry, we do not support this yet.'"
+# TODO put lines of code not in function into main function of this script
+
+# TODO(IMPORTANT): Get this info passed in (probably in JSON)
+# university
+# major
+# BS, BA, other types
+# year_declared_under
+# max units user prefers to take (if > than what school allows, school limit wins)
+# specialization? y/n
+#      if so, specialization = user_specialization
+# is specific school needed? I prefer not for now
+#
+
+
+
+# OLD TESTING CODE
+
+# institution = input("Institution: ")
+# major = input("Major: ")
+# BS_BA_Other = input("BS, BA or other?")
+# year_declared_under = input("What year are you declaring under?")
+# specialization = input("Do you have a specialization? (y/n)")
+# if 'n' in specialization.lower():
+#    specialization = None
+# else:
+#    specialization = input("What is your specialization?")
+# build file path off of info
+# try to get file, if not there 'Sorry, we don't support this yet'
+# school_file, major_file = get_major_and_school_files(institution, major, BS_BA_Other, year_declared_under, specialization)
+# school_file = get_school_file(insitution)

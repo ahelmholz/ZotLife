@@ -31,7 +31,12 @@
 #                    do_not_take = True         -- only variable needed for blacklisted courses
 #                                               -- remember that all courses mentioned in this file MUST have a
 #                                                  course entry *[], blacklisted ones need only this variable
-#                    TODO: variable for id/group out of so many (for me -- hard to explain)
+#                    id_# = total_that_can_be_taken_for_credit
+#                        e.g.   id_1 = 2 means a total of 2 courses with this variable can be taken for credit towards
+#                                        major
+#                               id_2 = 5 (can coexist with above since it's a different id) means a total of 5 courses
+#                                        can be taken for credit towards major
+#
 #                    TODO: implement all of this, document all future variables added
 #
 #                    TEST SCORES EQUATING TO COURSES:

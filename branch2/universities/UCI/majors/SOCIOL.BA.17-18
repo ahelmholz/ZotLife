@@ -30,22 +30,32 @@ O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
   [SOCIOL 110]
 *[SOCIOL 31]
   units = 4
+  id_1 = 2 # for 'Select five of the following core courses, no more than two of which may be lower-division'
+           # does not require id for the other 3 since user can take 5 of them if desired
 *[SOCIOL 41]
   units = 4
+  id_1 = 2
 *[SOCIOL 43]
   units = 4
+  id_1 = 2
 *[SOCIOL 44]
   units = 4
+  id_1 = 2
 *[SOCIOL 56]
   units = 4
+  id_1 = 2
 *[SOCIOL 62]
   units = 4
+  id_1 = 2
 *[SOCIOL 63]
   units = 4
+  id_1 = 2
 *[SOCIOL 64]
   units = 4
+  id_1 = 2
 *[SOCIOL 68A]
   units = 4
+  id_1 = 2
 *[SOCIOL 135]
   units = 4
 *[SOCIOL 138]
@@ -83,6 +93,7 @@ O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
 *[SOCIOL 175B]
   units = 4
 # prereqs of courses
+
 *[ANTHRO 10A]
   units = 4
 *[ANTHRO 10B]
@@ -158,3 +169,5 @@ O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
 *[ECON 20A]
   do_not_take = True
 *[ECON 20B]
+
+# file should cause course_dict to have 54 total entries when working (debug info) -- please update number accordingly
