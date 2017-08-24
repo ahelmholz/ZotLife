@@ -565,7 +565,8 @@ def load_major_courses_into_data_structure(major_file, debug_enabled=False):
 # TODO: make into API-ish format
 # TODO: write algorithms to step through and build schedule
 # TODO: build in check for if class has a typo -- cross check with course DB
-# -- final safety is already saying we don't support it in case something goes wrong ;)
+# TODO: add more .maj files for testing
+# #-- final safety is already saying we don't support it in case something goes wrong ;)
 
 def printDebugInfo(info_tuple, school_vars, major_file, school_file):
     print("Number of courses in course_dict: {}".format(len(info_tuple[2])))

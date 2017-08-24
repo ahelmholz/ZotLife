@@ -2,11 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8f4f6ff2-2c09-4089-92e3-6e489a5e39a3" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/branch2/code/starter.py" afterPath="$PROJECT_DIR$/branch2/code/starter.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/branch2/universities/SSU/majors/major.BS.16-17" afterPath="$PROJECT_DIR$/branch2/universities/SSU/majors/major.BS.16-17" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/branch2/universities/SSU/note" afterPath="$PROJECT_DIR$/branch2/universities/SSU/note" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/branch2/universities/UCI/majors/SOCIOL.BA.17-18" afterPath="$PROJECT_DIR$/branch2/universities/UCI/majors/SOCIOL.BA.17-18" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -20,11 +16,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="starter.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="starter.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/branch2/code/starter.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="74">
-              <caret line="559" column="0" lean-forward="false" selection-start-line="559" selection-start-column="0" selection-end-line="559" selection-end-column="0" />
+            <state relative-caret-position="242">
+              <caret line="567" column="39" lean-forward="false" selection-start-line="567" selection-start-column="39" selection-end-line="567" selection-end-column="39" />
               <folding />
             </state>
           </provider>
@@ -90,10 +86,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="major.BS.16-17" pinned="false" current-in-tab="true">
+      <file leaf-file-name="major.BS.16-17" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/branch2/universities/SSU/majors/major.BS.16-17">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-147">
+            <state relative-caret-position="-811">
               <caret line="50" column="0" lean-forward="true" selection-start-line="50" selection-start-column="0" selection-end-line="50" selection-end-column="0" />
               <folding />
             </state>
@@ -721,18 +717,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/branch2/code/starter.py">
+    <entry file="file://$PROJECT_DIR$/branch2/universities/SSU/majors/major.BS.16-17">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="74">
-          <caret line="559" column="0" lean-forward="false" selection-start-line="559" selection-start-column="0" selection-end-line="559" selection-end-column="0" />
+        <state relative-caret-position="-811">
+          <caret line="50" column="0" lean-forward="true" selection-start-line="50" selection-start-column="0" selection-end-line="50" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/branch2/universities/SSU/majors/major.BS.16-17">
+    <entry file="file://$PROJECT_DIR$/branch2/code/starter.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-147">
-          <caret line="50" column="0" lean-forward="true" selection-start-line="50" selection-start-column="0" selection-end-line="50" selection-end-column="0" />
+        <state relative-caret-position="242">
+          <caret line="567" column="39" lean-forward="false" selection-start-line="567" selection-start-column="39" selection-end-line="567" selection-end-column="39" />
           <folding />
         </state>
       </provider>
