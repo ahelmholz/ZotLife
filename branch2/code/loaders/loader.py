@@ -1,64 +1,5 @@
-class CourseWrapper:
-    def __init__(self, number_to_pick = 1):
-        # check depth, can have multiple depths
-        # check if type CourseWrapper or Course when doing work (nesting)
-        self.number_to_pick = number_to_pick # number needed to be taken out of group to meet requirement
-        self.AND = []
-        self.OR = []
-        
-    def __repr__(self):
-        return '{}{}AND: {}, OR: {}{}'.format(self.number_to_pick, '{', self.AND, self.OR, '}')
-
-class Course:
-    def __init__(self, course_name):
-        self.course_name = course_name
-        self.variables = {}
-        self.comment = ''
-        # isRequiredOption means course is in major outline (may be optional -- but still in major outline)
-        self.isRequiredOption = False # since course_dict will be initialized with all prereqs as well
-        self.user_has_taken = None
-        # preqs before course
-        # list of Course and CourseWrapper objects
-        self.prereqs = []
-        self.coreq_list = []
-        self.classes = [] # loaded from database
-        # user can possibly take these courses after completing this course
-        self.is_prereq_for = []
-        # pull/store info from DB?
-        # when is it offered?
-        self.course_offered_in = [] # FALL, WINTER, SPRING, SUMMER -- find out/add options from DB?
-        # TODO: keep list of CLASSES in course object, with the class class storing discussion sections, specific lab #'s, etc
-        # could use old code
-
-    def add_var(self, var, val):
-        self.variables[var] = val
-
-    def add_comment(self, comment):
-        self.comment = comment
-
-    def add_coreq(self, course_obj):
-        if course_obj not in self.coreq_list:
-            self.coreq_list.append(course_obj)
-
-    def add_prereq(self, course_obj):
-        if course_obj not in self.prereqs:
-            self.prereqs.append(course_obj)
-
-    def returnInfo(self):
-        return 'Course name: {}\n\tvars: {}\n\tcomment: {}\n\tprereq_list: {}\n\tpreq_for_list: {}\n\t' \
-               'coreq_list: {}\n\tisRequiredOption: {}'.format(
-            self.course_name, self.variables, self.comment, self.prereqs, self.is_prereq_for, self.coreq_list,
-            self.isRequiredOption)
-
-    def __str__(self):
-        return self.course_name
-
-    def __repr__(self):
-        return self.course_name
-
-    def add_is_prereq_for(self, course):
-        if course not in self.is_prereq_for:
-            self.is_prereq_for.append(course)
+from .Course import Course
+from .CourseWrapper import CourseWrapper
 
 def get_major_and_school_files(institution, major, type, catalog_year, specialization=None):
     # basic checks of input to function -- won't catch everything (should be done elsewhere)
@@ -180,7 +121,7 @@ def load_major_courses_into_data_structure(major_file, debug_enabled=False):
     # when '(' is reached, prereq wrapper ref is pushed on stack
     # when ')' is reached, prereq wrapper ref is popped from stack
     # MUST have index as 0 passed in at first to reset function
-    
+
     # for parsing 2nd half of file (course prereqs)
     def recur_parse_prereqs(index, line, working_course, course_dict):
         if index == 0:
@@ -558,16 +499,6 @@ def load_major_courses_into_data_structure(major_file, debug_enabled=False):
     # function returns tuple, [0] is major comment, [1] is list of major requirements, [2] is dictionary of course info
     return (major_strings[0], major_list, course_dict)
 
-# TODO: move TODOs
-# TODO: get classes already taken
-# TODO: load school info file -- get max units allowed per time - default if not
-# TODO: check all variables when building schedule
-# TODO: make into API-ish format
-# TODO: write algorithms to step through and build schedule
-# TODO: build in check for if class has a typo -- cross check with course DB
-# TODO: add more .maj files for testing
-# #-- final safety is already saying we don't support it in case something goes wrong ;)
-
 def printDebugInfo(info_tuple, school_vars, major_file, school_file):
     print("Number of courses in course_dict: {}".format(len(info_tuple[2])))
     print('Files:')
@@ -584,56 +515,18 @@ def printDebugInfo(info_tuple, school_vars, major_file, school_file):
     print("\n******** SCHOOL VARS ********")
     print(school_vars)
 
-""" TO SAVE EFFORT DURING TESTING """
-#TODO: remove this
-major_file = open("../universities/UCI/majors/SOCIOL.BA.17-18")
-school_file = open("../universities/UCI/UCI.info")
-debug = True
-""""""
-# will load info from the major/school files, make objects with info from both file and course DB
-try:
+def load(institution, major, BS_BA_Other, year_declared_under, specialization, debug = False):
+    # will load info from the major/school files, make objects with info from both file and course DB
+    try:
+        school_file, major_file = get_major_and_school_files(institution, major, BS_BA_Other, year_declared_under,
+                                                             specialization)
+        course_info = load_major_courses_into_data_structure(major_file, debug)
+        school_vars = load_school_vars(school_file)
+        if debug:
+            printDebugInfo(course_info, school_vars, major_file, school_file)
+        major_file.close()
+        school_file.close()
 
-    courses_info = load_major_courses_into_data_structure(major_file, debug)
-    school_vars = load_school_vars(school_file)
-    if debug:
-        printDebugInfo(courses_info, school_vars, major_file, school_file)
-    major_file.close()
-    school_file.close()
-
-
-except Exception as e:
-    print(str(e))
-    print('We do not support this major at this University yet.')
-
-# TODO: if script exits with anything but desired output to controller (PhP script or another),
-# TODO(cont):"Say, 'Sorry, we do not support this yet.'"
-# TODO put lines of code not in function into main function of this script
-
-# TODO(IMPORTANT): Get this info passed in (probably in JSON)
-# university
-# major
-# BS, BA, other types
-# year_declared_under
-# max units user prefers to take (if > than what school allows, school limit wins)
-# specialization? y/n
-#      if so, specialization = user_specialization
-# is specific school needed? I prefer not for now
-#
-
-
-
-# OLD TESTING CODE
-
-# institution = input("Institution: ")
-# major = input("Major: ")
-# BS_BA_Other = input("BS, BA or other?")
-# year_declared_under = input("What year are you declaring under?")
-# specialization = input("Do you have a specialization? (y/n)")
-# if 'n' in specialization.lower():
-#    specialization = None
-# else:
-#    specialization = input("What is your specialization?")
-# build file path off of info
-# try to get file, if not there 'Sorry, we don't support this yet'
-# school_file, major_file = get_major_and_school_files(institution, major, BS_BA_Other, year_declared_under, specialization)
-# school_file = get_school_file(insitution)
+        return course_info, school_vars
+    except Exception as e:
+        print('We do not support this major at this University yet.')
