@@ -48,7 +48,9 @@ def check_basic_syntax_and_remove_comments(major_file, debug_enabled=False):
                 if line[i] == '#':
                     ignore_rest_of_line = True
                 else:
-                    if "'''" in line:
+                    if '--' in line:
+                        pass
+                    elif "'''" in line:
                         special_comment += line
                         break
                     elif debug_enabled:
@@ -438,8 +440,8 @@ def load_major_courses_into_data_structure(major_file, debug_enabled=False):
 
                 course_dict[working_course.course_name] = working_course
                 local_expression = ''
-    expression_terminated = None
     major_list = []
+    elective_info = ''
     for line in first_half.splitlines():
         if '\\' in line.strip()[-1:]:
             expression_terminated = False
@@ -449,9 +451,8 @@ def load_major_courses_into_data_structure(major_file, debug_enabled=False):
             expression += line
         if expression_terminated and len(expression) > 0:
             # if elective
-            if len(expression) < 5 and 'E' in expression:
-                print('\n(((( Electives need to be handled ))))\n')
-                # TODO: handle electives -- keep needed vars on this line, e.g. from_upper_div = 2, from_lower_div = 2
+            if '--' in expression and 'E' in expression:
+                elective_info = expression.split('--')[1].strip()
             # process expression here
             #print(expression)
             elif '(' in expression:
@@ -496,8 +497,9 @@ def load_major_courses_into_data_structure(major_file, debug_enabled=False):
                 course_dict[name].isRequiredOption = True
             expression = ''
 
-    # function returns tuple, [0] is major comment, [1] is list of major requirements, [2] is dictionary of course info
-    return (major_strings[0], major_list, course_dict)
+    # function returns tuple, [0] is major comment, [1] is list of major requirements, [2] is dictionary of course info,
+    # [3] is elective info
+    return (major_strings[0], major_list, course_dict, elective_info)
 
 def printDebugInfo(info_tuple, school_vars, major_file, school_file):
     print("Number of courses in course_dict: {}".format(len(info_tuple[2])))
@@ -512,17 +514,28 @@ def printDebugInfo(info_tuple, school_vars, major_file, school_file):
     for key, value in info_tuple[2].items():
         print(value.returnInfo())
         print()
+    print("\n******** ELECTIVE INFO ********")
+    print(info_tuple[3])
     print("\n******** SCHOOL VARS ********")
     print(school_vars)
 
-def load(institution, major, BS_BA_Other, year_declared_under, specialization, debug = False):
+def load(runtime_vars):
     # will load info from the major/school files, make objects with info from both file and course DB
     try:
-        school_file, major_file = get_major_and_school_files(institution, major, BS_BA_Other, year_declared_under,
-                                                             specialization)
-        course_info = load_major_courses_into_data_structure(major_file, debug)
+        school_file, major_file = get_major_and_school_files(runtime_vars['institution'], runtime_vars['major'],
+                runtime_vars['BS_BA_Other'], runtime_vars['year_declared_under'], runtime_vars['specialization'])
+        course_info = load_major_courses_into_data_structure(major_file, runtime_vars['debug'])
+        # change user_has_taken if in list
+        for course_name in runtime_vars['user_has_taken']:
+            if course_name in course_info[2]:
+                course_info[2][course_name].user_has_taken = True
+            else:
+                course_info[2][course_name] = Course(course_name)
+                course_info[2][course_name].user_has_taken = True
+                # TODO: try to get units for new entry somehow for final count (get from DB?)
+
         school_vars = load_school_vars(school_file)
-        if debug:
+        if runtime_vars['debug']:
             printDebugInfo(course_info, school_vars, major_file, school_file)
         major_file.close()
         school_file.close()

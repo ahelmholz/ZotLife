@@ -16,6 +16,8 @@ class Course:
         # pull/store info from DB?
         # when is it offered?
         self.course_offered_in = []  # FALL, WINTER, SPRING, SUMMER -- find out/add options from DB?
+        self.user_priority = None # Make priority system for scheduling (desired courses)
+        # TODO: options to get out as fast as possible, or take as long as needed to have specific class?
         # TODO: keep list of CLASSES in course object, with the class class storing discussion sections, specific lab #'s, etc
         # could use old code
 
@@ -35,9 +37,9 @@ class Course:
 
     def returnInfo(self):
         return 'Course name: {}\n\tvars: {}\n\tcomment: {}\n\tprereq_list: {}\n\tpreq_for_list: {}\n\t' \
-               'coreq_list: {}\n\tisRequiredOption: {}'.format(
+               'coreq_list: {}\n\tisRequiredOption: {}\n\tuser_has_taken: {}'.format(
             self.course_name, self.variables, self.comment, self.prereqs, self.is_prereq_for, self.coreq_list,
-            self.isRequiredOption)
+            self.isRequiredOption, self.user_has_taken)
 
     def __str__(self):
         return self.course_name

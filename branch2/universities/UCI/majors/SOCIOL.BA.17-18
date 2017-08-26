@@ -2,7 +2,6 @@
 #
 # Not going to lie, I honestly chose sociology because it's easy.
 #
-# TODO: handle only taking 2 lower div out of group and rest upper
 #
 # ---- REQ ----
 [SOCIOL 1]
@@ -12,7 +11,8 @@
 O [SOCIOL 64] O [SOCIOL 68A] O [SOCIOL 135] O [SOCIOL 138] O [SOCIOL 141] O [SOCIOL 144] O [SOCIOL 145] \
 O [SOCIOL 150] O [SOCIOL 158C] O [SOCIOL 161] O [SOCIOL 164W] O [SOCIOL 166] O [SOCIOL 167A] O [SOCIOL 171] \
 O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
-2E # 'Two additional Sociology courses, one of which must be upper-division' # TODO: store requirements in some format in this line
+2E -- {'SOCIOL': {'courses_to_take' : 2, 'upper_div_req' : 1}} # TODO: document format/instructions for building
+# 'Two additional Sociology courses, one of which must be upper-division' # TODO: store requirements in some format in this line
 
 # -- COURSES --
 *[SOCIOL 1]
