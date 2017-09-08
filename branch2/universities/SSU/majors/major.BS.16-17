@@ -20,7 +20,7 @@
 #           VARIABLES:
 #               NOTE: ALL VARIABLES ARE LOWERCASE, not all variables are required. Framework will use them if they exist
 #
-#               var_name = value  -- stores course varialbes
+#               var_name = value  -- stores course variables
 #                Supported variables:
 #                    units = #
 #                    credits = #   -- can use units or credits. Be consistent per university
@@ -97,7 +97,7 @@
 
 *[CMPS 12A]
   credits = 5
-  coreq = [CMPS 12A]
+  coreq = [CMPS 12L]
   blacklist = [TEST COURSE1]
   $ 'Please check placement requirements and prerequisites for this course.'
 *[CMPS 12L]

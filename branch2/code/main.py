@@ -41,6 +41,10 @@ def main():
     course_info, school_vars = load(runtime_vars)
     runtime_vars['course_info'] = course_info
     runtime_vars['school_vars'] = school_vars
+    runtime_vars['fast_track'] = 1 # 1 or 0
+    runtime_vars['prefered_courses'] = None # TODO: implement
+    runtime_vars['user_course_vars'] = {'act_math' : 29}
+    runtime_vars['upper_div_student'] = 0 # for lower-div or upper_div only classes
 
     if course_info is None or school_vars is None:
         print('We do not support this major at this University yet.')

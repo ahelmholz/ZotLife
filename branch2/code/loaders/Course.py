@@ -17,9 +17,7 @@ class Course:
         # when is it offered?
         self.course_offered_in = []  # FALL, WINTER, SPRING, SUMMER -- find out/add options from DB?
         self.user_priority = None # Make priority system for scheduling (desired courses)
-        # TODO: options to get out as fast as possible, or take as long as needed to have specific class?
-        # TODO: keep list of CLASSES in course object, with the class class storing discussion sections, specific lab #'s, etc
-        # could use old code
+        # TODO: add class info from DB -- only if course is in viable level 1 schedule
 
     def add_var(self, var, val):
         self.variables[var] = val

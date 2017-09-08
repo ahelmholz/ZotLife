@@ -1,3 +1,4 @@
+# each wrapper will always have entries in AND or OR but never both
 class CourseWrapper:
     def __init__(self, number_to_pick=1):
         # check depth, can have multiple depths
