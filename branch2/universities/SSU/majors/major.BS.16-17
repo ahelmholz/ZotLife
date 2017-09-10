@@ -26,7 +26,8 @@
 #                    credits = #   -- can use units or credits. Be consistent per university
 #                    coreq = [COURSE], [OPTIONAL COURSE] -- corequisite
 #                    blacklist = [],[],[] -- courses which make course entry ineligible for credit towards major
-#                    lower_div_only = True
+#                    lower_div_only = True      -- these two vars need only to exist (anything after '=') to take effect
+#                                               -- DO NOT HAVE BOTH
 #                    upper_div_only = False     -- upper div students only
 #                    do_not_take = True         -- only variable needed for blacklisted courses
 #                                               -- remember that all courses mentioned in this file MUST have a

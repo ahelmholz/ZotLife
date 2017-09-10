@@ -37,6 +37,7 @@ def main():
     runtime_vars['units_left_for_other_per_user_year'] = 12
     runtime_vars['max_wanted_schedules'] = 5
     runtime_vars['debug'] = True
+    runtime_vars['ap_calc_bc'] = 4 # for testing
 
     course_info, school_vars = load(runtime_vars)
     runtime_vars['course_info'] = course_info

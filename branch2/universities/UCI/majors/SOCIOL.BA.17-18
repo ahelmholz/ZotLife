@@ -169,5 +169,5 @@ O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
 *[ECON 20A]
   do_not_take = True
 *[ECON 20B]
-
+  do_not_take = True
 # file should cause course_dict to have 54 total entries when working (debug info) -- please update number accordingly

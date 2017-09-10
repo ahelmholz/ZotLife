@@ -66,9 +66,92 @@ def get_pre_co_list(course, course_list):
 def add_percents_priorites():
     pass
 
+def recursively_append_to_remove(course, to_remove):
+    """ function appends courses to 'to_remove' list which the user has taken.
+    In other words, if the user has taken x, and y is a coreq or prereq to x, x,y and all coreqs/prereqs to their prereqs
+    (and so on) will be added to the 'to_remove' list """
+    if isinstance(course, CourseWrapper.CourseWrapper):
+        if len(course.AND) > 0:
+            for x in course.AND:
+                recursively_append_to_remove(x, to_remove)
+        else: # OR
+            for x in course.OR:
+                recursively_append_to_remove(x, to_remove)
+        return
+    coreqs_prereqs = course.prereqs + course.coreq_list
+    for x in coreqs_prereqs:
+        if x not in to_remove:
+            recursively_append_to_remove(x, to_remove)
+    if course not in to_remove:
+        to_remove.append(course)
+
 def make_feeder_pool(pool, runtime_vars, feeder_pool):
-    feeder_pool.append('Hello, world!')
-    # TODO
+    # TODO: CHECK IF THIS WORKS
+    to_remove = [] # courses and entire options to remove
+    blacklisted = {} # do not pick options for final pool which have courses which have blacklisted one another --
+    # blacklisted contains strings, not course objects
+    flatten = lambda *n: (e for a in n
+                          for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))
+    all_course_names = [x.course_name for x in flatten(pool)]
+    for options in pool:
+        double_break = False # to break out of 2nd loop as well when breaking out of 3rd
+        for option in options:
+            if double_break:
+                double_break = False
+                break
+            course_names_in_option = [course.course_name for course in option]
+            for course in option:
+                if course.course_name in runtime_vars['user_has_taken']:
+                    recursively_append_to_remove(course, to_remove)
+                # NOTE: may need to add things here
+                if course.variables:
+                    if runtime_vars['upper_div_student'] and 'lower_div_only' in course.variables:
+                        to_remove.append(option)
+                        double_break = True
+                        break
+                    id_count = {}
+                    for var in course.variables:
+                        # if placement score or test score gets user out of course, remove course and related items
+                        if var in runtime_vars and ('ap_' in var or 'act_' in var or 'sat_' in var) and \
+                            int(runtime_vars[var]) >= int(course.variables[var]): # TODO, make types compatible
+                            recursively_append_to_remove(course, to_remove)
+                        # check ids
+                        if 'id_' in var:
+                            if var not in id_count:
+                                id_count[var] = 0
+                            id_count[var] += 1
+                            if int(course.variables[var]) < id_count[var]:
+                                to_remove.append(option)
+                                double_break = True
+                                break
+                        # this shouldn't even happen
+                        if 'do_not_take' in var:
+                            to_remove.append(option)
+                            double_break = True
+                            break
+                        if 'blacklist' in var:
+                            for course_name in course_names_in_option:
+
+                                if course_name in course.variables[var]:
+                                    #print(course.variables[var][
+                                    #          course.variables[var].index(course_name) + len(course_name)])
+                                    if course.variables[var]\
+                                    [course.variables[var].index(course_name) + len(course_name)] == ']':
+                                    # extra conditional added for case where Econ1 and Econ 15A were being treated as the same course
+                                        to_remove.append(option)
+                                        double_break = True
+                                        break
+                            for course_name in all_course_names:
+                                if course_name in course.variables[var]:
+                                    blacklisted[course.course_name] = course_name
+    # TODO from pool remove to_remove course items
+    # TODO if removal of list makes list empty, PROBLEM
+    # TODO check blacklisted
+    # TODO pick x best options (based off of fast or not) and add to feeder pool
+    if runtime_vars['debug']:
+        print("*** TO REMOVE ***")
+        print(to_remove)
+        print("*************")
     # 0) DESIGN CHOICE: Readable code over efficiency...Remove prereqs/coreqs of taken courses and taken courses
         # (or tested out of courses), first remove all option choices with blacklisted stuff, bad id's
     # 1) do the picking in loop -- handle fast-track or user-preferred
