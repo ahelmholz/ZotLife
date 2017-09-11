@@ -63,9 +63,31 @@ def get_pre_co_list(course, course_list):
             if x not in course_list:
                 get_pre_co_list(x, course_list)
 
-def add_percents_priorites():
-    pass
+def add_percents_priorites(course_options):
+    # TODO actually implement getting this stuff from database -- for now there are just hard-coded values for testing
+    # TODO (not here) add class specific info to FINAL courses in schedules
+    # TODO (not here) add check for missing info in course, try to find it in database if able (e.g. if units is missing, etc.)
+    # TODO account for if user isn't taken a quarter
+    # NOTE: we can change percentages and priorities however we want to move results
 
+    """ TESTING CODE """
+    # completely for tesitng, actual implementation will NOT be like this
+    # courses will randomly pick 1 from each
+    quarters_percents = {'Fall' : random.sample(range(100), 30) + [0] * 8, 'Winter': random.sample(range(100), 30) + [0] * 8,
+                         'Spring':random.sample(range(100), 30) + [0] * 8}
+    # extra 0's to make more likely course time not known or course not offered in that quarter
+    priorities = random.sample(range(30), 30) # randomly pick one per course for now -- later will be user based,
+    # and next highest priority will be highest courses in tree, with priorities dropping as levels drop
+
+    for x in course_options:
+        for option in x:
+            for course in option:
+                course.user_priority = priorities[random.randint(0, 29)]
+                course.percent_chance_offered['Fall'] = quarters_percents['Fall'][random.randint(0, 30)]
+                course.percent_chance_offered['Winter'] = quarters_percents['Winter'][random.randint(0, 30)]
+                course.percent_chance_offered['Spring'] = quarters_percents['Spring'][random.randint(0, 30)]
+
+    """"""""""""
 def recursively_append_to_remove(course, to_remove):
     """ function appends courses to 'to_remove' list which the user has taken.
     In other words, if the user has taken x, and y is a coreq or prereq to x, x,y and all coreqs/prereqs to their prereqs
@@ -85,16 +107,17 @@ def recursively_append_to_remove(course, to_remove):
     if course not in to_remove:
         to_remove.append(course)
 
-def make_feeder_pool(pool, runtime_vars, feeder_pool):
-    # TODO: CHECK IF THIS WORKS
-    to_remove = [] # courses and entire options to remove
-    blacklisted = {} # do not pick options for final pool which have courses which have blacklisted one another --
+def remove_certian_course_options(pool, runtime_vars):
+    # TODO: CHECK IF THIS ACTUALLY WORKS (I'm only partially joking)
+    to_remove = []  # courses and entire options to remove
+    blacklisted = {}  # do not pick options for final pool which have courses which have blacklisted one another --
+    courses_with_special_ids = []  # course objects with ids which will need to be accounted for
     # blacklisted contains strings, not course objects
     flatten = lambda *n: (e for a in n
                           for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))
     all_course_names = [x.course_name for x in flatten(pool)]
     for options in pool:
-        double_break = False # to break out of 2nd loop as well when breaking out of 3rd
+        double_break = False  # to break out of 2nd loop as well when breaking out of 3rd
         for option in options:
             if double_break:
                 double_break = False
@@ -109,21 +132,16 @@ def make_feeder_pool(pool, runtime_vars, feeder_pool):
                         to_remove.append(option)
                         double_break = True
                         break
-                    id_count = {}
                     for var in course.variables:
                         # if placement score or test score gets user out of course, remove course and related items
                         if var in runtime_vars and ('ap_' in var or 'act_' in var or 'sat_' in var) and \
-                            int(runtime_vars[var]) >= int(course.variables[var]): # TODO, make types compatible
+                                        int(runtime_vars[var]) >= int(
+                                    course.variables[var]):  # TODO, make types compatible
                             recursively_append_to_remove(course, to_remove)
                         # check ids
                         if 'id_' in var:
-                            if var not in id_count:
-                                id_count[var] = 0
-                            id_count[var] += 1
-                            if int(course.variables[var]) < id_count[var]:
-                                to_remove.append(option)
-                                double_break = True
-                                break
+                            if course not in courses_with_special_ids:
+                                courses_with_special_ids.append(course)
                         # this shouldn't even happen
                         if 'do_not_take' in var:
                             to_remove.append(option)
@@ -133,25 +151,71 @@ def make_feeder_pool(pool, runtime_vars, feeder_pool):
                             for course_name in course_names_in_option:
 
                                 if course_name in course.variables[var]:
-                                    #print(course.variables[var][
+                                    # print(course.variables[var][
                                     #          course.variables[var].index(course_name) + len(course_name)])
-                                    if course.variables[var]\
-                                    [course.variables[var].index(course_name) + len(course_name)] == ']':
-                                    # extra conditional added for case where Econ1 and Econ 15A were being treated as the same course
+                                    if course.variables[var] \
+                                            [course.variables[var].index(course_name) + len(course_name)] == ']':
+                                        # extra conditional added for case where Econ1 and Econ 15A were being treated as the same course
                                         to_remove.append(option)
                                         double_break = True
                                         break
                             for course_name in all_course_names:
                                 if course_name in course.variables[var]:
                                     blacklisted[course.course_name] = course_name
-    # TODO from pool remove to_remove course items
-    # TODO if removal of list makes list empty, PROBLEM
-    # TODO check blacklisted
-    # TODO pick x best options (based off of fast or not) and add to feeder pool
     if runtime_vars['debug']:
         print("*** TO REMOVE ***")
         print(to_remove)
         print("*************")
+    new_options = []
+    for x in pool:
+        new_options.append([])
+        for y in x:
+            if y in to_remove:
+                if len(x) > 1:  # can remove this option
+                    # check to make sure at least 1 option in x is valid
+                    found = False
+                    for y1 in x:
+                        if y1 not in to_remove:
+                            found = True
+                            break
+                    if not found:
+                        print('Error...Valid option not found')
+                        exit()
+                else:  # user must take this, but logically can't, there is some problem
+                    print('Problem is here - random unique string right here')
+                    exit()
+            else:
+                new_options[-1].append([])
+                for z in y:
+                    if z not in to_remove:
+                        new_options[-1][-1].append(z)
+                if len(new_options[-1][-1]) == 0:  # if user has met requirements for all courses in this option
+                    del new_options[-1][-1]
+        if len(new_options[-1]) == 0:
+            del new_options[-1]
+    return new_options,blacklisted, courses_with_special_ids
+
+def make_feeder_pool(pool, runtime_vars, feeder_pool):
+    new_options, blacklisted, courses_with_special_ids = remove_certian_course_options(pool, runtime_vars)
+    # add likelyhood to be offered per quarter percentage and (user/our) priority
+    add_percents_priorites(new_options)
+
+    # CHANGE_VAR
+    pool_length = 5 # 5 is a good number
+    if runtime_vars['fast_track']:
+        while len(feeder_pool) < 5:
+            # if not possible break
+            # pick shortest option from each x
+            for x in new_options:
+                pass
+    else:
+        while len(feeder_pool) < 5:
+            # if not possible break
+            pass
+    # TODO check special ids
+    # TODO check blacklisted
+    # TODO pick x best options (based off of fast or not) and add to feeder pool
+
     # 0) DESIGN CHOICE: Readable code over efficiency...Remove prereqs/coreqs of taken courses and taken courses
         # (or tested out of courses), first remove all option choices with blacklisted stuff, bad id's
     # 1) do the picking in loop -- handle fast-track or user-preferred
@@ -200,6 +264,7 @@ def make_combos(runtime_vars):
     feeder_pool = []
     make_feeder_pool(option_pool_final, runtime_vars, feeder_pool)
     # TODO: add percents/priorities somehow
+    # TODO return 2 items
     return feeder_pool # possibly return more
 
 

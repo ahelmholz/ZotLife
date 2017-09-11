@@ -15,9 +15,9 @@ class Course:
         self.is_prereq_for = []
         # pull/store info from DB?
         # when is it offered?
-        self.course_offered_in = []  # FALL, WINTER, SPRING, SUMMER -- find out/add options from DB?
-        self.user_priority = None # Make priority system for scheduling (desired courses)
         # TODO: add class info from DB -- only if course is in viable level 1 schedule
+        self.percent_chance_offered = {}
+        self.user_priority = None # Make priority system for scheduling (desired courses)
 
     def add_var(self, var, val):
         self.variables[var] = val
