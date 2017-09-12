@@ -30,7 +30,7 @@ def pick_from_wrapper(wrapper, recur_pool):
         else:
             return recur_pool
     elif len(wrapper.OR) > 0:
-        # TODO: optimize here so user doesn't take weird prereq?
+        # NOTE: may need to adjust here so user doesn't take weird prereq?
         picks = random.sample(range(len(wrapper.OR)), wrapper.number_to_pick)
         for i in picks:
             pick_from_wrapper(wrapper.OR[i], recur_pool)
@@ -82,7 +82,7 @@ def add_percents_priorites(course_options):
     for x in course_options:
         for option in x:
             for course in option:
-                course.user_priority = priorities[random.randint(0, 29)]
+                course.user_priority = priorities[random.randint(0, 29)] # also put priroties
                 course.percent_chance_offered['Fall'] = quarters_percents['Fall'][random.randint(0, 30)]
                 course.percent_chance_offered['Winter'] = quarters_percents['Winter'][random.randint(0, 30)]
                 course.percent_chance_offered['Spring'] = quarters_percents['Spring'][random.randint(0, 30)]
@@ -195,34 +195,91 @@ def remove_certian_course_options(pool, runtime_vars):
             del new_options[-1]
     return new_options,blacklisted, courses_with_special_ids
 
+def check_valid(pool, blacklisted, ids):
+    course_names = [i.course_name for i in pool]
+    id_count = {}
+    for course in pool:
+        if course.course_name in blacklisted and blacklisted[course.course_name] in course_names:
+            return False
+    for course in ids:
+        if course in pool:
+            for var in course.variables:
+                if 'id_' in var:
+                    if var not in id_count:
+                        id_count[var] = 0
+                    id_count[var] += 1
+                    if id_count[var] > int(course.variables[var]):
+                        return False
+    return True
+
 def make_feeder_pool(pool, runtime_vars, feeder_pool):
     new_options, blacklisted, courses_with_special_ids = remove_certian_course_options(pool, runtime_vars)
     # add likelyhood to be offered per quarter percentage and (user/our) priority
     add_percents_priorites(new_options)
 
     # CHANGE_VAR
-    pool_length = 5 # 5 is a good number
+    max_pool_length = 5 # 5 is a good number
     if runtime_vars['fast_track']:
-        while len(feeder_pool) < 5:
+        iter_count = 0
+        # CHANGE_VAR
+        while iter_count < 100: # guarantee first pool has least classes, after that they will have less but not guaranteed to be the least
+            iter_count += 1
+            to_add = []
             # if not possible break
             # pick shortest option from each x
             for x in new_options:
-                pass
-    else:
-        while len(feeder_pool) < 5:
+                if len(x) == 1: # user must take
+                    for y in x:
+                        for z in y:
+                            if z not in to_add:
+                                to_add.append(z)
+                else:
+                    if iter_count == 1:
+                        min_y = min(x, key=len)
+                        for y in min_y:
+                            if y not in to_add:
+                                to_add.append(y)
+                    else:
+                        # select randomly select from smallest half of options
+                        small_half = sorted(x, key=len)
+                        selected = small_half[random.randint(0, len(small_half)/2 +1)]
+                        for y in selected:
+                            if y not in to_add:
+                                to_add.append(y)
+            if check_valid(to_add, blacklisted, courses_with_special_ids):
+                feeder_pool.append(to_add)
+                if len(feeder_pool) >= max_pool_length:
+                    break
+    else: # user priorities accounted for here
+        iter_count = 0
+        # CHANGE_VAR
+        while iter_count < 100: # guarantee first pool has highest priority weight
+            iter_count += 1
+            to_add = []
             # if not possible break
-            pass
-    # TODO check special ids
-    # TODO check blacklisted
-    # TODO pick x best options (based off of fast or not) and add to feeder pool
-
-    # 0) DESIGN CHOICE: Readable code over efficiency...Remove prereqs/coreqs of taken courses and taken courses
-        # (or tested out of courses), first remove all option choices with blacklisted stuff, bad id's
-    # 1) do the picking in loop -- handle fast-track or user-preferred
-    # 2) add to pool while pool < x # CHANGE_VAR
-        # a) make sure no duplicates
-
-
+            # pick shortest option from each x
+            for x in new_options:
+                if len(x) == 1: # user must take
+                    for y in x:
+                        for z in y:
+                            if z not in to_add:
+                                to_add.append(z)
+                else:
+                    sorted_by_weights = sorted(x, key=lambda x1: sum([b.user_priority for b in x1]), reverse=True) # python is nice
+                    if iter_count == 1:
+                        for y in sorted_by_weights[0]:
+                            if y not in to_add:
+                                to_add.append(y)
+                    else:
+                        # select randomly select from best half of options
+                        selected = sorted_by_weights[random.randint(0, len(sorted_by_weights)/2 +1)]
+                        for y in selected:
+                            if y not in to_add:
+                                to_add.append(y)
+            if check_valid(to_add, blacklisted, courses_with_special_ids):
+                feeder_pool.append(to_add)
+                if len(feeder_pool) >= max_pool_length:
+                    break
 
 def make_combos(runtime_vars):
     major_req = runtime_vars['course_info'][1]
@@ -233,7 +290,6 @@ def make_combos(runtime_vars):
             wrappers.append(x)
         else:
             option_pool.append([[x]])
-
     for wrapper in wrappers:
         # NOTE: '# CHANGE_VAR' can be searched for in path for variables to tune runtime
         # CHANGE_VAR
@@ -245,7 +301,6 @@ def make_combos(runtime_vars):
             if temp not in option_pool2:
                 option_pool2.append(temp)
         option_pool.append(option_pool2)
-
     option_pool_final = [] # will be option pool including prereqs and coreqs
     for x in option_pool:
         temp_pool = []
@@ -260,14 +315,6 @@ def make_combos(runtime_vars):
         for x in option_pool_final:
             print(x)
         print('*** End options ***')
-
     feeder_pool = []
     make_feeder_pool(option_pool_final, runtime_vars, feeder_pool)
-    # TODO: add percents/priorities somehow
-    # TODO return 2 items
-    return feeder_pool # possibly return more
-
-
-
-
-
+    return feeder_pool

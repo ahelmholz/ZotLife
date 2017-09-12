@@ -9,17 +9,18 @@ from builders.builder import build
 import time
 
 def main():
+    # TODO: NUMBER ONE: TEST THIS THOROUGHLY -- LITTLE TESTING DONE
 
     # TODO: when building schedule, check for number of electives user will pick
     	   # and allow numerous slots. Also allow slots for courses outside of major
     # TODO: get variables in some format here
     # TODO: if script exits with anything but desired output to controller (PhP script or another),
     # TODO(cont):"Say, 'Sorry, we do not support this yet.'"
-    # TODO: get classes already taken
     # TODO: check all variables when building schedule
     # TODO: write algorithms to step through and build schedule
     # TODO: build in check for if class has a typo -- cross check with course DB
     # TODO: add more .maj files for testing -- final safety is saying we don't support it
+    # TODO write python script to check total lines of python code in project just because (exclude comments, spacing)
 
     """  MOST OF THIS NEEDS TO BE PASSED IN FROM USER SIDE SOMEHOW"""
     # enter info into dictionary for easy passing...
@@ -42,8 +43,8 @@ def main():
     course_info, school_vars = load(runtime_vars)
     runtime_vars['course_info'] = course_info
     runtime_vars['school_vars'] = school_vars
-    runtime_vars['fast_track'] = 1 # 1 or 0
-    runtime_vars['prefered_courses'] = None # TODO: implement
+    runtime_vars['fast_track'] = 0 # 1 or 0
+    runtime_vars['prefered_courses'] = None # will impact priorities
     runtime_vars['user_course_vars'] = {'act_math' : 29}
     runtime_vars['upper_div_student'] = 0 # for lower-div or upper_div only classes
 
