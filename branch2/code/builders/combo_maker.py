@@ -136,7 +136,7 @@ def remove_certian_course_options(pool, runtime_vars):
                         # if placement score or test score gets user out of course, remove course and related items
                         if var in runtime_vars and ('ap_' in var or 'act_' in var or 'sat_' in var) and \
                                         int(runtime_vars[var]) >= int(
-                                    course.variables[var]):  # TODO, make types compatible
+                                    course.variables[var]):  # TODO, make types compatible if not
                             recursively_append_to_remove(course, to_remove)
                         # check ids
                         if 'id_' in var:
@@ -218,7 +218,7 @@ def make_feeder_pool(pool, runtime_vars, feeder_pool):
     add_percents_priorites(new_options)
 
     # CHANGE_VAR
-    max_pool_length = 5 # 5 is a good number
+    max_pool_length = 6 # 5 is a good number
     if runtime_vars['fast_track']:
         iter_count = 0
         # CHANGE_VAR

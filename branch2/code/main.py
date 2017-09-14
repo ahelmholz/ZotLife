@@ -32,6 +32,7 @@ def main():
     runtime_vars['specialization'] = None
     runtime_vars['max_user_major_load'] = 18 # most units user is willing to take from major, must not be > max_units allowed by school
     runtime_vars['max_total_user_load'] = 20 # total (for all courses) user is willing to take in a quarter
+    # TODO load from school vars
     runtime_vars['user_has_taken'] = ['SOCIOL 1','SOCIOL 3', 'SOCIOL 110','FAKE CLASS'] # NOTE: This includes what the user is taking
                                                                         # (let's assume the user doesn't fail)
     runtime_vars['quarters_semesters'] = ['quarter', ['F','W','Sp','Su']]
@@ -44,7 +45,7 @@ def main():
     runtime_vars['course_info'] = course_info
     runtime_vars['school_vars'] = school_vars
     runtime_vars['fast_track'] = 0 # 1 or 0
-    runtime_vars['prefered_courses'] = None # will impact priorities
+    runtime_vars['preferred_courses'] = None # will impact priorities
     runtime_vars['user_course_vars'] = {'act_math' : 29}
     runtime_vars['upper_div_student'] = 0 # for lower-div or upper_div only classes
 
