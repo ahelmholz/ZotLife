@@ -73,8 +73,8 @@ def add_percents_priorites(course_options):
     """ TESTING CODE """
     # completely for tesitng, actual implementation will NOT be like this
     # courses will randomly pick 1 from each
-    quarters_percents = {'Fall' : random.sample(range(100), 30) + [0] * 8, 'Winter': random.sample(range(100), 30) + [0] * 8,
-                         'Spring':random.sample(range(100), 30) + [0] * 8}
+    quarters_percents = {1 : random.sample(range(100), 30) + [0] * 8, 2: random.sample(range(100), 30) + [0] * 8,
+                         3:random.sample(range(100), 30) + [0] * 8}
     # extra 0's to make more likely course time not known or course not offered in that quarter
     priorities = random.sample(range(30), 30) # randomly pick one per course for now -- later will be user based,
     # and next highest priority will be highest courses in tree, with priorities dropping as levels drop
@@ -83,9 +83,9 @@ def add_percents_priorites(course_options):
         for option in x:
             for course in option:
                 course.user_priority = priorities[random.randint(0, 29)] # also put priroties
-                course.percent_chance_offered['Fall'] = quarters_percents['Fall'][random.randint(0, 30)]
-                course.percent_chance_offered['Winter'] = quarters_percents['Winter'][random.randint(0, 30)]
-                course.percent_chance_offered['Spring'] = quarters_percents['Spring'][random.randint(0, 30)]
+                course.percent_chance_offered[1] = quarters_percents[1][random.randint(0, 30)]
+                course.percent_chance_offered[2] = quarters_percents[2][random.randint(0, 30)]
+                course.percent_chance_offered[3] = quarters_percents[3][random.randint(0, 30)]
 
     """"""""""""
 def recursively_append_to_remove(course, to_remove):
@@ -218,11 +218,11 @@ def make_feeder_pool(pool, runtime_vars, feeder_pool):
     add_percents_priorites(new_options)
 
     # CHANGE_VAR
-    max_pool_length = 6 # 5 is a good number
+    max_pool_length = 50 # 5 is a good number
     if runtime_vars['fast_track']:
         iter_count = 0
         # CHANGE_VAR
-        while iter_count < 100: # guarantee first pool has least classes, after that they will have less but not guaranteed to be the least
+        while iter_count < 10000: # guarantee first pool has least classes, after that they will have less but not guaranteed to be the least
             iter_count += 1
             to_add = []
             # if not possible break
@@ -253,7 +253,7 @@ def make_feeder_pool(pool, runtime_vars, feeder_pool):
     else: # user priorities accounted for here
         iter_count = 0
         # CHANGE_VAR
-        while iter_count < 100: # guarantee first pool has highest priority weight
+        while iter_count < 10000: # guarantee first pool has highest priority weight
             iter_count += 1
             to_add = []
             # if not possible break

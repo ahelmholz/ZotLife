@@ -1,6 +1,7 @@
 from .combo_maker import make_combos
 from multiprocessing import Process, Manager
 import time
+from copy import deepcopy
 
 # TODO: possibly account for OR situation with coreqs? -- just use framework vars to avoid disaster..Only if case comes up
 
@@ -11,6 +12,9 @@ def build(runtime_vars):
         print('*** Feeder pool ***')
         print(feeder_pool)
         print('*** End feeder pool ***')
+
+    # new data structure out of feeder_pool...Originally not planned
+
 
     # to make things easy
     builder_params = {
@@ -45,7 +49,7 @@ def build(runtime_vars):
     }
     manager = Manager()
     schedules = manager.list()
-    builder_timeout = 30 # CHANGE_VAR -- seconds
+    builder_timeout = 15 # CHANGE_VAR -- seconds
     start = time.time()
     i = 0
     while time.time() - start < builder_timeout and len(schedules) < runtime_vars['max_wanted_schedules'] and \
@@ -103,61 +107,107 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
         print(starting_frame)
         print('**** END ****')
 
-    def check_params(builder_params, starting_frame):
-        return True # TODO implement
+    def found_problem_fast(boxes):
+        # return all overflowed boxes
+        problems = {}
+        for key in boxes:
+            if key != 'cloud':
+                box = boxes[key]
+                box_spread_size = box['box_spread_size']
+                box_units = 0
+                for course in box['courses']:
+                    if 'units' not in course.variables:
+                        if 'missing_units' not in problems:
+                            problems['missing_units'] = []
+                        problems['missing_units'].append(course) # courses needing to be added to cloud
+                    else:
+                        box_units += int(course.variables['units'])
+                if box_units > box_spread_size:
+                    problems[key] = box_spread_size - box_units # units needing to be moved
+        if len(problems) > 0:
+            return problems
+        else:
+            return None # useless, but for my sanity
 
-    def recur_build(sorted_courses, index, schedules, starting_frame, builder_params, timeout, start, cloud, placement,
-                    course_year_season):
-        index += 1
-        if not check_params(builder_params, starting_frame): # bad schedule
+    # check keys, missing units, overflow_years
+    def move_courses_to_next_percent_or_cloud(boxes, bad):
+        pass # TODO implement, if coreq moved, move course
+
+    def sort_courses(boxes, starting_frame, builder_params, courses):
+        # TODO: check upper div
+        new_frame = deepcopy(starting_frame)
+        new_frame['cloud'] = boxes['cloud'] # add cloud
+        overflow = None
+        unplaced_courses = [course.course_name for course in courses if course not in boxes['cloud']]
+        for i in range(len(starting_frame)):
+            year = i + builder_params['start_build_from_year']
+            for key in boxes:
+                if key != 'cloud':
+                    if key in new_frame[year]:
+                        for course in boxes[key]['courses']:
+                            if course.course_name in unplaced_courses:
+                                course_units = int(course.variables['units'])
+                                course_and_coreq_units = course_units
+                                course_and_coreq_prereqs = course.prereqs
+                                for x in course.coreq_list:
+                                    course_and_coreq_prereqs += x.prereqs
+                                    course_and_coreq_units += int(x.variables['units'])
+                                wait_to_place = False
+                                for prereq in course_and_coreq_prereqs:
+                                    # if prereq in unplaced, don't place
+                                    # TODO figure out how to check this
+                                    pass
+                                if new_frame[year][key]['units_used'] + course_and_coreq_units + \
+                                       new_frame[year][key]['blacked_out'] > new_frame[year][key]['max_units']:
+                                    wait_to_place = True
+                                if not wait_to_place:
+                                    # place course and course coreqs
+                                    # add to units_used, remove name from unplaced_courses
+                                    # TODO update here
+                                    pass
+        # TODO if unplaced_courses not empty, there is overflow
+
+        return new_frame, overflow # this overflow is years, list of lists [season, course]
+
+    def A(boxes, bad, schedules, timeout, builder_params, courses): # a great function name if I do say so myself
+        if time.time() - start > timeout or len(schedules) >= runtime_vars['max_wanted_schedules']:
             return
-        if index == len(sorted_courses):
-            print('Base case reached')
-            #schedules.append([starting_frame, cloud])
-            return
-        for course in sorted_courses[index:]:  # start with highest priority down to smallest
-            if time.time() - start < timeout and len(schedules) < runtime_vars['max_wanted_schedules']:
-                if not placement[course]:
-                    percent_high_to_low = sorted(list(course.percent_chance_offered.items()), key=lambda x: x[1],
-                                                 reverse=True)
-                    for season_chance in percent_high_to_low:
-                        if season_chance[1] < 30:  # < 30%
-                            cloud.append(course)
-                        else:
-                            # TODO: implement here
-                            # if course has prereqs, place prereqs earliest, course with coreqs together at soonest possible
-                            #   after prereqs
-                            # make prereq placement for course and coreqs recursive -- only use prereqs/coreqs
-                            # else place course in nearest year
-                            # adjust all data structures
-                            # check if year/season even exist in starting_frame, if not, move on
-                            # units/credits change -- do math with blacklisted/total allowed per quarter in check params
+        if bad is not None:
+            move_courses_to_next_percent_or_cloud(boxes, bad)
+        problems = found_problem_fast(boxes)
+        if problems is not None:
+            A(boxes, problems, schedules, timeout, builder_params, courses)
+        else:
+            new_frame, overflow = sort_courses(boxes, starting_frame, builder_params, courses)
+            problems_2 = None
+            if overflow is not None:
+                problems_2['overflow_years'] = overflow
+            if problems_2 is not None:
+                A(boxes, problems_2, schedules, timeout, builder_params, courses)
+            else:
+                schedules.append(new_frame)
 
-
-
-
-                            recur_build(sorted_courses, index, schedules, starting_frame, builder_params, timeout,
-                                        start, cloud, placement, course_year_season)
-
-                            # TODO undo placements in data structures
-                            # placement[course]
-                            # course_year_season
-                            # cloud
-
-
-
-    cloud = [] # suggest other classes or make user schedule
-    index = 0
-    sorted_courses = sorted(input, key=lambda x1: x1.user_priority, reverse=True)
-    placement = {} # to keep track of what has been placed and what hasn't
-    course_year_season = {}
+    boxes = {}
+    for season in builder_params['seasons']:
+        if builder_params['seasons'][season]['user_approved']:
+            box_spread_size = 0
+            for year in starting_frame:
+                if season in starting_frame[year]:
+                    box_spread_size += starting_frame[year][season]['max_units'] - \
+                                       starting_frame[year][season]['blacked_out']
+            boxes[season] = {'box_spread_size': box_spread_size, 'courses': []}
+    boxes['cloud'] = []
+    # attempt build with highest percentages first
     for course in input:
-        placement[course] = False
-        course_year_season[course] = [-1, -1]  # not input yet
-
+        max_chance = [0, 0] # season, chance
+        for season in course.percent_chance_offered:
+            if course.percent_chance_offered[season] > max_chance[1]:
+                max_chance[0] = season
+                max_chance[1] = course.percent_chance_offered[season]
+        if max_chance[1] < 60: # CHANGE_VAR
+            boxes['cloud'].append(course)
+        else: # put course where it is most likely offered
+            boxes[max_chance[0]]['courses'].append(course)
     # recursive call
-    recur_build(sorted_courses, -1, schedules, starting_frame, builder_params, timeout,
-                 start, cloud, placement, course_year_season)
-    print('HERE')
-
+    A(boxes, None, schedules, timeout, builder_params, input)
 

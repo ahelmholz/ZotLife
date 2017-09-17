@@ -23,7 +23,7 @@
 #               var_name = value  -- stores course variables
 #                Supported variables:
 #                    units = #
-#                    credits = #   -- can use units or credits. Be consistent per university
+#                    units = #   -- please only use units, the actual measurement will be stored in school info file
 #                    coreq = [COURSE], [OPTIONAL COURSE] -- corequisite
 #                    blacklist = [],[],[] -- courses which make course entry ineligible for credit towards major
 #                    lower_div_only = True      -- these two vars need only to exist (anything after '=') to take effect
@@ -97,15 +97,15 @@
 # courses must have some kind of info in them
 
 *[CMPS 12A]
-  credits = 5
+  units = 5
   coreq = [CMPS 12L]
   blacklist = [TEST COURSE1]
   $ 'Please check placement requirements and prerequisites for this course.'
 *[CMPS 12L]
-  credits = 2
+  units = 2
   coreq = [CMPS 12A]
 *[TEST COURSE]
-  units = 4 # can use units or credits, just be consistent according to university
+  units = 4 # use only units, the actual measurement will be handled by the school config file
   ([AMS 10] O [MATH 21] O [MATH 22] O [MATH 23A])
 # blacklisted items
 *[TEST COURSE1]
