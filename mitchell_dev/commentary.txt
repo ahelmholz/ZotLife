@@ -1,0 +1,13 @@
+AFTER working schedules are built, pool info for those courses from DB for level 2 sorting
+
+     level 1: Courses (complete)
+     level 2: Individual classes/labs/discussions (not started)
+
+TODO: code level 2
+
+LATER:
+    Add disclaimer, explain how algorithm based off of likelihoods
+    Make bug reporting system for beta
+    Add option to move courses back in case user doesn't pass a course
+    Somehow linking tutors to classes through this system
+    Add share schedule (somewhere else)

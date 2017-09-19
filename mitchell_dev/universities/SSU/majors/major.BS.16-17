@@ -38,7 +38,7 @@
 #                               id_2 = 5 (can coexist with above since it's a different id) means a total of 5 courses
 #                                        can be taken for credit towards major
 #
-#                    TODO: implement all of this, document all future variables added
+#
 #
 #                    TEST SCORES EQUATING TO COURSES:
 #                       Supported tests (will add more):

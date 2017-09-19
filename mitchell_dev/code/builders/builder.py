@@ -3,8 +3,6 @@ from multiprocessing import Process, Manager
 import time
 from copy import deepcopy
 
-# TODO: possibly account for OR situation with coreqs? -- just use framework vars to avoid disaster..Only if case comes up
-
 def build(runtime_vars):
     """Returns list of length runtime_vars['max_wanted_schedules'] containing working schedules"""
     feeder_pool = make_combos(runtime_vars)
@@ -13,43 +11,12 @@ def build(runtime_vars):
         print(feeder_pool)
         print('*** End feeder pool ***')
 
-    # new data structure out of feeder_pool...Originally not planned
-
-
     # to make things easy
-    builder_params = {
-        # TODO: change -- pull from runtime_vars/user
-        # for now things are hardcoded for implementing algorithm
-        'start_build_from_year': 2018,
-        'start_build_from_season' : 2,
-        'seasons': {
-            # leave_open_units {2018:4} means leave 4 units open in year 2018 of this quarter
-            # seasons are numbered for simplicity
-            1: {'user_approved': True,
-                     'max_units': 20,
-                     'leave_open_units': {2018:4, 2019:2},
-                     'max_quarters_left': 4
-                     },
-            2: {'user_approved': True,
-                'max_units': 20,
-                'leave_open_units': {2018:4, 2019:2},
-                'max_quarters_left': 4
-                },
-            3: {'user_approved': True,
-                'max_units': 20,
-                'leave_open_units': {2018:4, 2019:2},
-                'max_quarters_left': 4
-                },
-            4: {'user_approved': False,
-                'max_units': 20,
-                'leave_open_units': {2018:4, 2019:2},
-                'max_quarters_left': 4
-                }
-        }
-    }
+    builder_params = runtime_vars['builder_params']
+    builder_params['runtime_vars'] = runtime_vars
     manager = Manager()
     schedules = manager.list()
-    builder_timeout = 15 # CHANGE_VAR -- seconds
+    builder_timeout = runtime_vars['builder_timeout']
     start = time.time()
     i = 0
     while time.time() - start < builder_timeout and len(schedules) < runtime_vars['max_wanted_schedules'] and \
@@ -65,11 +32,7 @@ def build(runtime_vars):
             p2.join()
         i += 2
     return schedules
-    # AFTER working schedules are built, pool info for those courses from DB for level 2 sorting
-    # NOTE:
-        # level 1: Courses
-        # level 2: Individual classes/labs/discussions
-    # TODO: add option to move courses back in case user doesn't pass a course (functionality may be somewhere else)
+
 def add_blackouts(entry, year, blackouts):
     temp = 0
     if year in blackouts:
@@ -77,17 +40,6 @@ def add_blackouts(entry, year, blackouts):
     entry['blacked_out'] = temp
 
 def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
-
-    # NOTE: This is a patch for an issue I haven't found..
-    # investigate -- maybe not
-    #to_append_fix = []
-    #for x in input:
-    #    for y in x.coreq_list:
-    #        if y not in input:
-    #            to_append_fix.append(y)
-    #            print('Appended {}'.format(y.course_name))
-    #input += to_append_fix
-    # END
     start = time.time()
     starting_frame = {}
     max_left = 0
@@ -138,14 +90,10 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
         if len(problems) > 0:
             return problems
         else:
-            return None # useless, but for my sanity
+            return None  # useless, but for my sanity
 
-    # check keys, missing units
-    # only have to change boxes
     def move_courses_to_next_percent_or_cloud(boxes, bad):
         if 'missing_units' in bad:
-            #for key, value1 in bad.items():
-            #    for value2 in value1:
             for value2 in bad['missing_units']:
                     boxes['cloud'].append(value2) # put in cloud
                     # remove course from boxes season if in it
@@ -161,18 +109,23 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
                 index = 0
                 while units_moved < units:
                     if index >= len(sort_by_lowest_priority):
-                        #print('index ERROR around 160 in builder')
-                        exit()
-                    if sort_by_lowest_priority[index] not in boxes['cloud']: # to prevent double dipping
+                        exit()  # exit thread if index out of bounds
+                    if sort_by_lowest_priority[index] not in boxes['cloud']:  # to prevent double dipping
                         current_percent = sort_by_lowest_priority[index].percent_chance_offered[season]
-                        move_to_season = None
+                        max_season = None
+                        max_percent = None
                         for season1, percent in sort_by_lowest_priority[index].percent_chance_offered.items():
                             if percent < current_percent and percent > 60: # TODO: check consistency -- not .6
-                                # TODO: make more accurate
+                                if max_season is None:
+                                    max_season = season1
+                                    max_percent = percent
+                                else:
+                                    if percent > max_percent:
+                                        max_percent = percent
+                                        max_season = season1
                                 # NOTE: assumes coreq will follow whatever it's coreqs % is regardless of reported %,
                                 # ex: MATH 3A is 90% and MATH 3AL is 2% and they are coreqs, MATH3AL is then considered to have 90%
-                                move_to_season = season1
-                                break
+                        move_to_season = max_season
                         if move_to_season is None:
                             # move to cloud
                             units_moved += int(sort_by_lowest_priority[index].variables['units'])
@@ -204,7 +157,6 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
                     index += 1
 
     def sort_courses(boxes, starting_frame, builder_params, courses):
-        # TODO: check upper div only!!
         new_frame = deepcopy(starting_frame)
         new_frame['cloud'] = boxes['cloud'] # add cloud
         overflow = None
@@ -221,7 +173,6 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
                                 for x in course.coreq_list:
                                     course_and_coreq_units += int(x.variables['units'])
                                 wait_to_place = False
-                                # may want to improve this?
                                 for x_name in unplaced_courses:
                                     name_list = [i.course_name for i in courses]
                                     if x_name in name_list:
@@ -229,7 +180,19 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
                                         for y in courses[index].is_prereq_for:
                                             if y.course_name == course.course_name:
                                                 wait_to_place = True
-                                # end of make logic better...
+                                    # check if student not upper div (at this point in schedule) and course is upper div only
+                                    if 'upper_div_only' in course.variables:
+                                        if not builder_params['runtime_vars']['upper_div_student']:
+                                            user_units = builder_params['runtime_vars']['units_completed']
+                                            num_units_for_upper_div = builder_params['runtime_vars']['units_completed']
+                                            units_in_schedule = 0
+                                            for key1 in boxes:
+                                                if key1 != 'cloud':
+                                                    for c in boxes[key1]['courses']:
+                                                        if 'units' in c.variables:
+                                                            units_in_schedule += int(c.variables['units'])
+                                            if user_units + units_in_schedule < num_units_for_upper_div:
+                                                wait_to_place = True
                                 if new_frame[year][key]['units_used'] + course_and_coreq_units + \
                                        new_frame[year][key]['blacked_out'] > new_frame[year][key]['max_units']:
                                     wait_to_place = True
@@ -291,11 +254,10 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
             if course.percent_chance_offered[season] > max_chance[1]:
                 max_chance[0] = season
                 max_chance[1] = course.percent_chance_offered[season]
-        if max_chance[1] < 60: # CHANGE_VAR
+        if max_chance[1] < runtime_vars['min_percent_for_scheduling']:
             boxes['cloud'].append(course)
         else: # put course where it is most likely offered
             boxes[max_chance[0]]['courses'].append(course)
     # recursive call
     A(boxes, None, schedules, timeout, builder_params, input)
 
-# TODO tell user of min units for full time (store in school info)

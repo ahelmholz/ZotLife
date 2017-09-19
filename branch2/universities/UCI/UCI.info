@@ -1,5 +1,0 @@
-# file of variables 
-# var = value
-# all values will be stored as strings, converted by the script when needed
-max_units = 20
-total_units_to_graduate = 180

@@ -1,0 +1,9 @@
+# file of variables 
+# var = value
+# all values will be stored as strings, converted by the script when needed
+max_units = 20
+total_units_to_graduate = 180
+min_units_per_quarter = 12
+min_units_for_upper_div = 90
+credit_measurement = units # credits, hours, etc.
+semesters_quarters = quarters

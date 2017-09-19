@@ -7,17 +7,16 @@
 [SOCIOL 1]
 [SOCIOL 2] O [SOCIOL 3]
 [SOCIOL 110] A [SOCIOL 120] A [SOCIOL 180A]
-5([SOCIOL 31] O [SOCIOL 41] O [SOCIOL 43] O [SOCIOL 44] O [SOCIOL 56] O [SOCIOL 62] O [SOCIOL 63] \ # TODO: IMPORTANT: parse double digits
+5([SOCIOL 31] O [SOCIOL 41] O [SOCIOL 43] O [SOCIOL 44] O [SOCIOL 56] O [SOCIOL 62] O [SOCIOL 63] \
 O [SOCIOL 64] O [SOCIOL 68A] O [SOCIOL 135] O [SOCIOL 138] O [SOCIOL 141] O [SOCIOL 144] O [SOCIOL 145] \
 O [SOCIOL 150] O [SOCIOL 158C] O [SOCIOL 161] O [SOCIOL 164W] O [SOCIOL 166] O [SOCIOL 167A] O [SOCIOL 171] \
 O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
-2E -- {'SOCIOL': {'courses_to_take' : 2, 'upper_div_req' : 1}} # TODO: document format/instructions for building
+2E -- {'SOCIOL': {'courses_to_take' : 2, 'upper_div_req' : 1}} # TODO inform user of this
 # TODO leave spaces for electives
-# 'Two additional Sociology courses, one of which must be upper-division' # TODO: store requirements in some format in this line
 
 # -- COURSES --
 *[SOCIOL 1]
-  units = 4  # TODO: a way of saying 'units' or 'credits' appropriately per school -- will just read whatever .maj uses
+  units = 4
 *[SOCIOL 2]
   units = 4
 *[SOCIOL 3]
@@ -171,4 +170,3 @@ O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
   do_not_take = True
 *[ECON 20B]
   do_not_take = True
-# file should cause course_dict to have 54 total entries when working (debug info) -- please update number accordingly

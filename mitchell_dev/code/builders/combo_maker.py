@@ -63,12 +63,11 @@ def get_pre_co_list(course, course_list):
             if x not in course_list:
                 get_pre_co_list(x, course_list)
 
+# accounts for users not taking certain quarters
 def add_percents_priorites(course_options):
     # TODO actually implement getting this stuff from database -- for now there are just hard-coded values for testing
-    # TODO (not here) add class specific info to FINAL courses in schedules
-    # TODO (not here) add check for missing info in course, try to find it in database if able (e.g. if units is missing, etc.)
-    # TODO account for if user isn't taken a quarter
-    # NOTE: we can change percentages and priorities however we want to move results
+    # TODO add check for missing info in course, try to find it in database if able (e.g. if units is missing, etc.)
+    # NOTE: we can change percentages and priorities however we want to shape results
 
     """ TESTING CODE """
     # completely for tesitng, actual implementation will NOT be like this
@@ -86,6 +85,7 @@ def add_percents_priorites(course_options):
                 course.percent_chance_offered[1] = quarters_percents[1][random.randint(0, 30)]
                 course.percent_chance_offered[2] = quarters_percents[2][random.randint(0, 30)]
                 course.percent_chance_offered[3] = quarters_percents[3][random.randint(0, 30)]
+                # left off summer
 
     """"""""""""
 def recursively_append_to_remove(course, to_remove):
@@ -108,7 +108,6 @@ def recursively_append_to_remove(course, to_remove):
         to_remove.append(course)
 
 def remove_certian_course_options(pool, runtime_vars):
-    # TODO: CHECK IF THIS ACTUALLY WORKS (I'm only partially joking)
     to_remove = []  # courses and entire options to remove
     blacklisted = {}  # do not pick options for final pool which have courses which have blacklisted one another --
     courses_with_special_ids = []  # course objects with ids which will need to be accounted for
@@ -136,7 +135,7 @@ def remove_certian_course_options(pool, runtime_vars):
                         # if placement score or test score gets user out of course, remove course and related items
                         if var in runtime_vars and ('ap_' in var or 'act_' in var or 'sat_' in var) and \
                                         int(runtime_vars[var]) >= int(
-                                    course.variables[var]):  # TODO, make types compatible if not
+                                    course.variables[var]):
                             recursively_append_to_remove(course, to_remove)
                         # check ids
                         if 'id_' in var:
@@ -151,11 +150,9 @@ def remove_certian_course_options(pool, runtime_vars):
                             for course_name in course_names_in_option:
 
                                 if course_name in course.variables[var]:
-                                    # print(course.variables[var][
-                                    #          course.variables[var].index(course_name) + len(course_name)])
+                                    # extra conditional added for case where Econ1 and Econ 15A were being treated as the same course
                                     if course.variables[var] \
                                             [course.variables[var].index(course_name) + len(course_name)] == ']':
-                                        # extra conditional added for case where Econ1 and Econ 15A were being treated as the same course
                                         to_remove.append(option)
                                         double_break = True
                                         break
@@ -216,19 +213,16 @@ def make_feeder_pool(pool, runtime_vars, feeder_pool):
     new_options, blacklisted, courses_with_special_ids = remove_certian_course_options(pool, runtime_vars)
     # add likelyhood to be offered per quarter percentage and (user/our) priority
     add_percents_priorites(new_options)
-
-    # CHANGE_VAR
-    max_pool_length = 200 # 5 is a good number
+    max_pool_length = runtime_vars['max_feeder_pool_length']
     if runtime_vars['fast_track']:
         iter_count = 0
-        # CHANGE_VAR
-        while iter_count < 10000: # guarantee first pool has least classes, after that they will have less but not guaranteed to be the least
+        while iter_count < runtime_vars['make_fp_iter_count']: # guarantee first pool has least classes, after that they will have less but not guaranteed to be the least
             iter_count += 1
             to_add = []
             # if not possible break
             # pick shortest option from each x
             for x in new_options:
-                if len(x) == 1: # user must take
+                if len(x) == 1:  # user must take
                     for y in x:
                         for z in y:
                             if z not in to_add:
@@ -250,10 +244,9 @@ def make_feeder_pool(pool, runtime_vars, feeder_pool):
                 feeder_pool.append(to_add)
                 if len(feeder_pool) >= max_pool_length:
                     break
-    else: # user priorities accounted for here
+    else:  # user priorities accounted for here
         iter_count = 0
-        # CHANGE_VAR
-        while iter_count < 10000: # guarantee first pool has highest priority weight
+        while iter_count < runtime_vars['make_fp_iter_count']: # guarantee first pool has highest priority weight
             iter_count += 1
             to_add = []
             # if not possible break
@@ -291,11 +284,9 @@ def make_combos(runtime_vars):
         else:
             option_pool.append([[x]])
     for wrapper in wrappers:
-        # NOTE: '# CHANGE_VAR' can be searched for in path for variables to tune runtime
-        # CHANGE_VAR
-        option_count = get_option_count(wrapper, 100, 1) # wrapper, max_options wanted, initial value
+        option_count = get_option_count(wrapper, runtime_vars['max_options_generated_from_wrapper'], 1) # wrapper, max_options wanted, initial value
         option_pool2 = []
-        # cap length of options at 1, half of total possible, or 100 - whichever is smallest
+        # cap length of options at 1, half of total possible, or 100
         while len(option_pool2) < math.ceil(option_count):
             temp = pick_from_wrapper(wrapper,[])
             if temp not in option_pool2:
