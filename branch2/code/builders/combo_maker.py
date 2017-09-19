@@ -218,7 +218,7 @@ def make_feeder_pool(pool, runtime_vars, feeder_pool):
     add_percents_priorites(new_options)
 
     # CHANGE_VAR
-    max_pool_length = 50 # 5 is a good number
+    max_pool_length = 200 # 5 is a good number
     if runtime_vars['fast_track']:
         iter_count = 0
         # CHANGE_VAR

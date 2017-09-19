@@ -37,7 +37,7 @@ def main():
                                                                         # (let's assume the user doesn't fail)
     runtime_vars['quarters_semesters'] = ['quarter', ['F','W','Sp','Su']]
     runtime_vars['units_left_for_other_per_user_year'] = 12
-    runtime_vars['max_wanted_schedules'] = 10
+    runtime_vars['max_wanted_schedules'] = 100
     runtime_vars['debug'] = True
     runtime_vars['ap_calc_bc'] = 4 # for testing
 
@@ -54,9 +54,22 @@ def main():
         exit()
 
     schedules = build(runtime_vars)
+    if runtime_vars['debug']:
+        for x in schedules:
+            print('\n\n\n')
+            for key, value in x.items():
+                if key != 'cloud':
+                    print(key)
+                    for season, vars in value.items():
+                        print('\t{}'.format(season))
+                        print('\t\t{}'.format(vars))
+                else:
+                    print('\tCloud\n\t\t{}'.format(value))
 
     if runtime_vars['debug']:
-        print('\nTime taken: {}'.format(time.time() - start))
+        print('\n# schedules produced: {}'.format(len(schedules)))
+        print('Time taken: {}'.format(time.time() - start))
+    # TODO offer alternative classes for classes in cloud?
 
 if __name__ == '__main__':
     start = time.time()
