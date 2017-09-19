@@ -11,3 +11,4 @@ LATER:
     Add option to move courses back in case user doesn't pass a course
     Somehow linking tutors to classes through this system
     Add share schedule (somewhere else)
+    Include finals schedule
