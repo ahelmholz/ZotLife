@@ -5,6 +5,7 @@ class Course:
         self.comment = ''
         # isRequiredOption means course is in major outline (may be optional -- but still in major outline)
         self.isRequiredOption = False  # since course_dict will be initialized with all prereqs as well
+                                        # may be useful later
         self.user_has_taken = False  # False until True
         # preqs before course
         # list of Course and CourseWrapper objects

@@ -14,13 +14,13 @@ def main():
     runtime_vars['debug'] = True
 
     # CHANGE_VARs -- these are values to adjust performance of schedule building
-    runtime_vars['max_feeder_pool_length'] = 200
+    runtime_vars['max_feeder_pool_length'] = 1000
     runtime_vars['make_fp_iter_count'] = 10000
-    runtime_vars['max_options_generated_from_wrapper'] = 100
+    runtime_vars['max_options_generated_from_wrapper'] = 200
     runtime_vars['builder_timeout'] = 15 # seconds
     runtime_vars['min_percent_for_scheduling'] = 60 # course must have 60% likelyhood or more in season to be scheduled
                                                     # for that season, otherwise it is put in the cloud
-    runtime_vars['max_wanted_schedules'] = 2
+    runtime_vars['max_wanted_schedules'] = 100
     # END CHANGE_VARs
 
     runtime_vars['institution'] = 'UCI'
@@ -65,30 +65,31 @@ def main():
         # TODO: -- pull this info from above -- hardcoded for now
         # TODO: save spots for electives here, notify user of elective requirements
         # for now things are hardcoded for implementing algorithm
-        'start_build_from_year': 2018,
+        'start_build_from_year': 1, # can be 0..literally just put this here after making changes to not break everything
         'start_build_from_season' : 2,
         'seasons': {
-            # leave_open_units {2018:4} means leave 4 units open in year 2018 of this quarter
+            # leave_open_units {1:4} means leave 4 units open in year 2018 of this quarter
             # seasons are numbered for simplicity 1 == Fall, etc.
+            # TODO pull info about quarters (whats offered, etc, from school file)
             1: {'user_approved': True,
                      'max_units': 20,
-                     'leave_open_units': {2018:4, 2019:2},
+                     'leave_open_units': {1:4, 2:2},
                      'max_quarters_left': 4
                      },
             2: {'user_approved': True,
                 'max_units': 20,
-                'leave_open_units': {2018:4, 2019:2},
+                'leave_open_units': {1:4, 2:2},
                 'max_quarters_left': 4
                 },
             3: {'user_approved': True,
                 'max_units': 20,
-                'leave_open_units': {2018:4, 2019:2},
+                'leave_open_units': {1:4, 2:2},
                 'max_quarters_left': 4
                 },
             # if not user_approved, entry need not exist in the first place
             4: {'user_approved': False,
                 'max_units': 20,
-                'leave_open_units': {2018:4, 2019:2},
+                'leave_open_units': {1:4, 2:2},
                 'max_quarters_left': 4
                 }
         }
@@ -126,6 +127,7 @@ if __name__ == '__main__':
 
 # TODO: make many more .maj files
 # TODO: check no duplicates in feeder pool, validity of other schedules
+# TODO: summer quarters
 
 # NOTE: may need one day to possibly account for OR situation with coreqs
     #  -- just use framework vars to make it easy..Only if case comes up

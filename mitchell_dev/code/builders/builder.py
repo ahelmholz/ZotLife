@@ -51,6 +51,7 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
             max_left = builder_params['seasons'][key]['max_quarters_left']
     for i in range(max_left):
         starting_frame[start_year + i] = {}
+        #starting_frame[i] = {}
     for season in builder_params['seasons']:
         max_units = builder_params['seasons'][season]['max_units']
         if builder_params['seasons'][season]['user_approved']:
@@ -70,6 +71,7 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
     #    print(starting_frame)
     #    print('**** END ****')
 
+    # checks if aggregate of units per season is overflowed (first check)
     def found_problem_fast(boxes):
         # return all overflowed boxes
         problems = {}
@@ -92,6 +94,8 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
         else:
             return None  # useless, but for my sanity
 
+    # moves low percent courses or courses missing units to cloud,
+    # moves x units worth of lowest priority courses to new season
     def move_courses_to_next_percent_or_cloud(boxes, bad):
         if 'missing_units' in bad:
             for value2 in bad['missing_units']:
@@ -156,6 +160,8 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
                                 del boxes[season]['courses'][boxes[season]['courses'].index(x)]
                     index += 1
 
+    # "spreads" courses out throughout years in template (new_frame) in needed order according to constraints
+    # constraints include prereqs first, units open in season, if user is upper division by that season, etc.
     def sort_courses(boxes, starting_frame, builder_params, courses):
         new_frame = deepcopy(starting_frame)
         new_frame['cloud'] = boxes['cloud'] # add cloud
@@ -163,7 +169,7 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
         unplaced_courses = [course.course_name for course in courses if course not in boxes['cloud']]
         for i in range(len(starting_frame)):
             year = i + builder_params['start_build_from_year']
-            for key in boxes:
+            for key in boxes: # key is season
                 if key != 'cloud':
                     if key in new_frame[year]:
                         for course in boxes[key]['courses']:
@@ -173,18 +179,25 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
                                 for x in course.coreq_list:
                                     course_and_coreq_units += int(x.variables['units'])
                                 wait_to_place = False
+                                """ Begin check constraints """
                                 for x_name in unplaced_courses:
                                     name_list = [i.course_name for i in courses]
                                     if x_name in name_list:
                                         index = name_list.index(x_name)
+                                        # if unplaced course is prereq for course about to be placed
                                         for y in courses[index].is_prereq_for:
                                             if y.course_name == course.course_name:
                                                 wait_to_place = True
+                                    # check for if prereq placed in this season, if so, don't place course
+                                    for k, potential_prereq in new_frame[year][key]['courses'].items():
+                                        is_prereq_for_names = [i.course_name for i in potential_prereq.is_prereq_for]
+                                        if course.course_name == is_prereq_for_names:
+                                            wait_to_place = True
                                     # check if student not upper div (at this point in schedule) and course is upper div only
                                     if 'upper_div_only' in course.variables:
                                         if not builder_params['runtime_vars']['upper_div_student']:
                                             user_units = builder_params['runtime_vars']['units_completed']
-                                            num_units_for_upper_div = builder_params['runtime_vars']['units_completed']
+                                            num_units_for_upper_div = builder_params['runtime_vars']['num_units_for_upper_div']
                                             units_in_schedule = 0
                                             for key1 in boxes:
                                                 if key1 != 'cloud':
@@ -196,6 +209,7 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
                                 if new_frame[year][key]['units_used'] + course_and_coreq_units + \
                                        new_frame[year][key]['blacked_out'] > new_frame[year][key]['max_units']:
                                     wait_to_place = True
+                                """ End check constraints """
                                 if not wait_to_place:
                                     new_frame[year][key]['courses'][course.course_name] = course
                                     for x in course.coreq_list:
@@ -222,6 +236,8 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
             overflow = season_units_dict
         return new_frame, overflow # this overflow is years, list of lists [season, course]
 
+    # recursive function which orchestrates the validity checking/timing, moving courses, etc. Basically does the building and places
+    # valid schedules in var schedules
     def A(boxes, bad, schedules, timeout, builder_params, courses): # a great function name if I do say so myself
         if time.time() - start > timeout or len(schedules) >= runtime_vars['max_wanted_schedules']:
             return
@@ -258,6 +274,6 @@ def build_schedules(input, schedules, builder_params, runtime_vars, timeout):
             boxes['cloud'].append(course)
         else: # put course where it is most likely offered
             boxes[max_chance[0]]['courses'].append(course)
-    # recursive call
+    # recursive call from build_schedules
     A(boxes, None, schedules, timeout, builder_params, input)
 
