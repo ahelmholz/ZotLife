@@ -4,6 +4,20 @@ from collections import defaultdict
 
 
 
+def convertYear(year:str)->list:
+    '''converts the year to a more readable version'''
+    data = year.split('-')
+    numMeaning = {
+        '92': 1,#Fall
+        '51':7,#Summer QTR (COM)
+        '76':6,#Summer Session 2
+        '39':5,#Summer Session 10 week
+        '25':4,#Summer Session I
+        '14':3,#Spring Quarter
+        '03':2,#Winter Quarter
+    }
+    return [int(data[0]), numMeaning[data[1]]]
+
 
 def getWebText(dept:str, year:str)->str:
     """Passes the parameters to the webpage and returns the text from the server"""
@@ -26,27 +40,28 @@ def getWebText(dept:str, year:str)->str:
     text = text.split("*** Total Classes Displayed:")[0]
     return text
 
-def webTextToDict(text:str)->dict:
+def webTextToDict(text:str, dept:str,year:list)->dict:
     """Takes the text from webreg and converts the class data into a dictionary"""
-    #TODO: Rewrite and add comments as to how each part of this works. It is not grabbbing all the classes(Not even getting the title-->index)
     text = text.split('\n\n')
     masterDict = dict()
     for elClass in text:
-        lineNum = -1
         index = str()
+        isFirstLine = True
+        index = ""
+        #split by line
         for line in elClass.split('\n'):
-            lineNum += 1
-            if lineNum == 0:
+            line = line.strip()
+            if isFirstLine:
                 index = "_".join(line.split())
-                if index != '':
-                    masterDict[index] = list()
-            elif lineNum != 1:
+                masterDict[index] = list()
+                isFirstLine = False
+            else:
                 value = re.search(
-                    r"(\d{5})\s+([A-Z]{3})\s+([A-Z0-9]{1,2})\s+(\d{1,2})\s+([\w\s'\-]+,\s+\w+.|STAFF)\s+([\w\*]+)\s+([0-9:\-]+\s*[0-9:\-p]+|\s*)\s+(ON LINE|\w+\s\d+\w?|\*TBA\*)\s+(\w+,\s\w+\s\d+,\s\d+:\d+-\d+:\d+[ap]m|TBA|\s)\s+(\d+)\s+(\d+\/\d+|\d+)\s+(n\/a|)?(\s*\d+)\s*(\d+)?\s*([A-EG-N-P-Z&]+)?\s*(FULL|OPEN|Waitl)",
+                    r"(\d{5})\s+([A-Z]{3})\s+([A-Z0-9]{1,2})\s+(\d{1,2})\s+([\w\s'\-]+,\s+\w+.|STAFF)\s+([\w\*]+)\s+([0-9:]+|\s*)\-*\s*([0-9:\-p]+|\s*)\s+(ON LINE|\w+\s\d+\w?|\*TBA\*)\s+(\w+,\s\w+\s\d+,\s\d+:\d+-\d+:\d+[ap]m|TBA|\s)\s+(\d+)\s+(\d+\/\d+|\d+)\s+(n\/a|\s\d+)?(\s*\d+)\s*([A-EG-N-P-Z&]+)?\s*(FULL|OPEN|Waitl)",
                     line
                 )
                 if value:
-                    masterDict[index].append(value.groups())
+                    masterDict[index].append(value.groups() + tuple((year)))
 
     return masterDict
 
@@ -54,12 +69,12 @@ def webTextToDict(text:str)->dict:
 def getAllData()->dict:
     '''Grabs all the years, quarters, and departments data'''
     years = {
-        #"2017  Fall Quarter":"2017-92",
+        "2017  Fall Quarter":"2017-92",
         # "2017  Summer Session 2":"2017-76",
         # "2017  Summer Qtr (COM)":"2017-51",
         # "2017  10-wk Summer": "2017-39",
         # "2017  Summer Session 1": "2017-25",
-         "2017  Spring Quarter": "2017-14",
+        #  "2017  Spring Quarter": "2017-14",
         # "2017  Winter Quarter": "2017-03",
         # "2016  Fall Quarter": "2016-92",
         # "2016  Summer Session 2": "2016-76",
@@ -196,28 +211,14 @@ def getAllData()->dict:
         tempDict = dict()
         for dept in departments:
             text = getWebText(dept,years[year])
-            data = webTextToDict(text)
+            data = webTextToDict(text,dept,convertYear(years[year]))
             tempDict[dept] = data
             print("-->" + dept)
         masterDict[years[year]].append(tempDict)
         print("*" * 40)
         print(year)
         print("*"*40)
-
     return dict(masterDict)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

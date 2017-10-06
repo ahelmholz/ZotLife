@@ -11,12 +11,12 @@
 O [SOCIOL 64] O [SOCIOL 68A] O [SOCIOL 135] O [SOCIOL 138] O [SOCIOL 141] O [SOCIOL 144] O [SOCIOL 145] \
 O [SOCIOL 150] O [SOCIOL 158C] O [SOCIOL 161] O [SOCIOL 164W] O [SOCIOL 166] O [SOCIOL 167A] O [SOCIOL 171] \
 O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
-2E -- {'SOCIOL': {'courses_to_take' : 2, 'upper_div_req' : 1}} # TODO: document format/instructions for building
-# 'Two additional Sociology courses, one of which must be upper-division' # TODO: store requirements in some format in this line
+2E -- {'SOCIOL': {'courses_to_take' : 2, 'upper_div_req' : 1}} # TODO inform user of this
+# TODO leave spaces for electives
 
 # -- COURSES --
 *[SOCIOL 1]
-  units = 4  # TODO: a way of saying 'units' or 'credits' appropriately per school -- will just read whatever .maj uses
+  units = 4
 *[SOCIOL 2]
   units = 4
 *[SOCIOL 3]
@@ -170,4 +170,3 @@ O [SOCIOL 173] O [SOCIOL 174] O [SOCIOL 175B])
   do_not_take = True
 *[ECON 20B]
   do_not_take = True
-# file should cause course_dict to have 54 total entries when working (debug info) -- please update number accordingly

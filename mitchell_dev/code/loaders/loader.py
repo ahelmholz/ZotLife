@@ -3,7 +3,6 @@ from .CourseWrapper import CourseWrapper
 
 def get_major_and_school_files(institution, major, type, catalog_year, specialization=None):
     # basic checks of input to function -- won't catch everything (should be done elsewhere)
-    # NOTE: revise tests?
     if not institution.isupper():
         print('Error 1 in get_major_file')
         exit()
@@ -18,7 +17,7 @@ def get_major_and_school_files(institution, major, type, catalog_year, specializ
     if specialization is not None:
         path += '/' + specialization   # NOTE: may move location
     #print(path)
-    # TODO: may need to change this if different schools within University are supported
+    # NOTE: may need to change this if different schools within University are supported
     school_path = '../universities/' + institution + '/' + institution + '.info'
     try:
         return open(school_path, "r"), open(path, "r")
@@ -142,7 +141,12 @@ def load_major_courses_into_data_structure(major_file, debug_enabled=False):
         if line[index] == '(':
             recur_parse_prereqs.last_prereq_operator = recur_parse_prereqs.lastOperator
             if index > 0 and line[index - 1].isdigit():
-                recur_parse_prereqs.wrapper_stack.append(CourseWrapper(int(line[index - 1])))
+                i = 0
+                num_to_choose_str = ''
+                while i < index:
+                    num_to_choose_str += line[i]
+                    i += 1
+                recur_parse_prereqs.wrapper_stack.append(CourseWrapper(int(num_to_choose_str)))
             else:
                 recur_parse_prereqs.wrapper_stack.append(CourseWrapper())
             # at this point, top of stack is new wrapper
@@ -252,7 +256,12 @@ def load_major_courses_into_data_structure(major_file, debug_enabled=False):
         if line[index] == '(':
             recur_parse_major_reqs.last_prereq_operator = recur_parse_major_reqs.lastOperator
             if index > 0 and line[index - 1].isdigit():
-                recur_parse_major_reqs.wrapper_stack.append(CourseWrapper(int(line[index - 1])))
+                i = 0
+                num_to_choose_str = ''
+                while i < index:
+                    num_to_choose_str += line[i]
+                    i += 1
+                recur_parse_major_reqs.wrapper_stack.append(CourseWrapper(int(num_to_choose_str)))
             else:
                 recur_parse_major_reqs.wrapper_stack.append(CourseWrapper())
             # at this point, top of stack is new wrapper
@@ -520,7 +529,7 @@ def printDebugInfo(info_tuple, school_vars, major_file, school_file):
     print(school_vars)
 
 def load(runtime_vars):
-    # will load info from the major/school files, make objects with info from both file and course DB
+    # will load info from the major/school files, make objects with info file
     try:
         school_file, major_file = get_major_and_school_files(runtime_vars['institution'], runtime_vars['major'],
                 runtime_vars['BS_BA_Other'], runtime_vars['year_declared_under'], runtime_vars['specialization'])
@@ -532,8 +541,6 @@ def load(runtime_vars):
             else:
                 course_info[2][course_name] = Course(course_name)
                 course_info[2][course_name].user_has_taken = True
-                # TODO: try to get units for new entry somehow for final count (get from DB?)
-
         school_vars = load_school_vars(school_file)
         if runtime_vars['debug']:
             printDebugInfo(course_info, school_vars, major_file, school_file)

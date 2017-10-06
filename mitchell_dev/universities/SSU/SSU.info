@@ -2,6 +2,8 @@
 # var = value
 
 max_credits_allowed = 20
+credit_measurement = units # credits, hours, etc.
+semesters_quarters = quarters
 
 # we could store fun stuff in here  
 # random fact about the university? 
