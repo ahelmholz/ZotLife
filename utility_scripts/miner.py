@@ -2,6 +2,8 @@ import sys
 import requests
 import time
 
+# TODO: split on OR/AND and organize....
+# TODO: handle course ranges...(That's not irratating at all.)
 class ParsedCourse:
     # will parse text accordingly
     def __init__(self, course_name, course_text, course_url):
