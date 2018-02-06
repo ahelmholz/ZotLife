@@ -1,0 +1,11 @@
+-loaders load/parse .maj file
+-builders build possbile schedules according to parameters in runtime_vars
+-main is ran by caller
+-right now main uses hard coded values for parameters and randomly generates the likelyhoods
+    of a course being offered in order to test the framework 
+-.maj file under UCI for SOCIOLOGY is used for testing and debug flag is on
+-the SOCIOLOGY .maj file is the only available input file for now
+    - new input files can be formed for the framework using the specification/syntax
+      shown in main/universities/SSU/majors/major.BS.16-17
+-pseudo_code_scribbles contains a messy/rough overview of how the schedule building
+ algorithm in builders works

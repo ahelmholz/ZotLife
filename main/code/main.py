@@ -19,7 +19,7 @@ def main():
     runtime_vars['max_options_generated_from_wrapper'] = 200
     runtime_vars['builder_timeout'] = 15 # seconds
     runtime_vars['min_percent_for_scheduling'] = 60 # course must have 60% likelyhood or more in season to be scheduled
-                                                    # for that season, otherwise it is put in the cloud
+                                                    # for that season, otherwise it is put in the unplaced
     runtime_vars['max_wanted_schedules'] = 100
     # END CHANGE_VARs
 
@@ -107,19 +107,19 @@ def main():
                         print('\t\t{}'.format(season))
                         print('\t\t\t{}'.format(vars))
                 else:
-                    print('\tCloud\n\t\t{}'.format(value))
+                    print('\tUnplaced\n\t\t{}'.format(value))
         print('\n# schedules produced: {}'.format(len(schedules)))
         print('Time taken: {}'.format(time.time() - start))
 
     """ WORK FROM HERE """
 
     """"""""""""""""""""""""
-    # TODO pull schedules with least in cloud
-    # TODO add class specific info to courses in schedules -- handle level 2
+    # TODO use schedules with least in unplaced
+    # TODO add class specific info to courses in schedules -- handle level 2 (individual professors, etc.)
     # TODO get final unit count (total user planned, total user needs)
     # TODO tell user of min units for full time (store in school info)
-    # TODO: offer alternative courses for courses in cloud
-    # REMEMBER: courses in cloud may have the course they are a prereq for placed in schedule -- be careful
+    # TODO: offer alternative courses for courses in unplaced
+    # REMEMBER: courses in unplaced may have the course they are a prereq for placed in schedule -- be careful
 
 if __name__ == '__main__':
     start = time.time()
@@ -131,3 +131,11 @@ if __name__ == '__main__':
 
 # NOTE: may need one day to possibly account for OR situation with coreqs
     #  -- just use framework vars to make it easy..Only if case comes up
+
+"""
+Keep in mind with the design of the framework that if a course is full when 
+the user goes to enroll, the algorithm can be ran again with different 
+parameters (e.g. blackout x units user is already successfully enrolled 
+in in for upcoming quarter, run algorithm from this point in time and get 
+schedules not including full class at that time)
+"""
