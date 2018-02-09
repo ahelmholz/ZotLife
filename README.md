@@ -17,3 +17,8 @@
  plan can be generated, but not a weekly schedule of class times for the quarter/semester.
 
 See main/README for framework implementation details. 
+
+
+Feel free to contact for further information:
+Mitchell Pebbles: mitchelljeffrey.pebbles@gmail.com
+Austin Helmholz: austin.helmholz@gmail.com
